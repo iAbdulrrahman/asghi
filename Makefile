@@ -1,3 +1,10 @@
+PYTHON ?= python
+ifeq ($(OS),Windows_NT)
+  FLUTTER ?= $(shell where flutter 2>nul || echo C:/flutter/bin/flutter.bat)
+else
+  FLUTTER ?= $(shell command -v flutter 2>/dev/null || echo /c/flutter/bin/flutter.bat)
+endif
+
 .PHONY: check test seed test-backend test-mobile help
 
 help:
