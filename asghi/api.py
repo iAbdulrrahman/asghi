@@ -2,6 +2,7 @@
 Implements all functional requirements and enforces role-gating per h_uc.puml.
 """
 from __future__ import annotations
+import asyncio
 import os
 import shutil
 from contextlib import asynccontextmanager
@@ -63,12 +64,24 @@ UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "..", "uploads", "audio")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 
+async def _claim_sweeper_loop():
+    """Background loop to sweep expired claims every 60s."""
+    while True:
+        try:
+            repo = get_repository()
+            repo.sweep_expired_claims()
+        except Exception:
+            pass
+        await asyncio.sleep(60)
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """FastAPI lifespan: initialize and hydrate database once on application startup."""
+    """FastAPI lifespan: initialize, hydrate database, and run background claim sweeper."""
     repo = get_repository()
     repo.load_all_from_db()
+    sweeper_task = asyncio.create_task(_claim_sweeper_loop())
     yield
+    sweeper_task.cancel()
 
 
 repo = get_repository()
@@ -412,18 +425,14 @@ def claim_passage(req: ClaimRequest, user: User = Depends(get_current_user)):
     if not contributor_prof:
         raise HTTPException(status_code=403, detail="الحساب ليس لديه ملف مساهم")
 
-    success = contributor_prof.claim(req.passageId)
-    if not success:
+    repo = get_repository()
+    # P1 Item 5: single conditional UPDATE in an immediate transaction; 409 when row not won
+    tx_won = repo.claim_passage_tx(req.passageId, contributor_prof.userRoleProfileId)
+    if not tx_won:
         raise HTTPException(
-            status_code=400,
-            detail="تعذر حجز النص: النص محجوز لمساهم آخر أو يحتوي بالفعل على تسجيل معتمد أو قيد المراجعة.",
+            status_code=409,
+            detail="تعذر حجز النص: النص محجوز بالفعل لمساهم آخر أو يحتوي على تسجيل معتمد.",
         )
-
-    # Persist updated passage
-    for p in Passage._registry:
-        if p.passageId == req.passageId:
-            repo.save_passage(p)
-            break
 
     return {"message": "تم حجز النص بنجاح لتسجيل الصوت", "passageId": str(req.passageId)}
 
