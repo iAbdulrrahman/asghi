@@ -57,11 +57,17 @@ void main() {
     );
 
     await tester.pump();
-    expect(find.textContaining('المساهمة'), findsOneWidget);
+    for (int i = 0; i < 10; i++) {
+      await tester.pump(const Duration(milliseconds: 50));
+    }
 
-    // Trigger 401 callback
+    expect(find.text('اصغِ — مساهم'), findsOneWidget);
+
+    // Trigger 401 unauthorized callback
     apiClient.onUnauthorized?.call();
-    await tester.pumpAndSettle();
+    for (int i = 0; i < 10; i++) {
+      await tester.pump(const Duration(milliseconds: 50));
+    }
 
     // Now state is unauthenticated, rendering LoginScreen
     expect(find.text('تسجيل الدخول'), findsWidgets);
@@ -108,6 +114,10 @@ void main() {
     );
 
     await tester.pump();
+    for (int i = 0; i < 20; i++) {
+      await tester.pump(const Duration(milliseconds: 50));
+    }
+
     // Learner tabs present
     expect(find.text('المكتبة'), findsOneWidget);
     expect(find.text('التقدم'), findsOneWidget);
