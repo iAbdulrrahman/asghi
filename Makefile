@@ -11,7 +11,7 @@ else
   FLUTTER ?= $(shell command -v flutter 2>/dev/null || echo /c/flutter/bin/flutter.bat)
 endif
 
-.PHONY: setup check test seed test-backend test-mobile test-live help
+.PHONY: setup check test seed test-backend test-mobile test-live device-check help
 
 help:
 	@echo "Available targets:"
@@ -21,6 +21,7 @@ help:
 	@echo "  make test-backend - Run the pytest suite and restart verification using .venv"
 	@echo "  make test-live    - Run live end-to-end multi-role server integration tests using .venv"
 	@echo "  make test-mobile  - Run flutter analyze and flutter test"
+	@echo "  make device-check - Run live multi-role UI smoke walkthrough on connected Android device/emulator"
 
 $(VENV_PY):
 	$(PYTHON) -m venv $(VENV_DIR)
@@ -42,6 +43,9 @@ test-backend: setup
 
 test-mobile:
 	cd mobile && $(FLUTTER) analyze && $(FLUTTER) test
+
+device-check: setup
+	$(VENV_PY) scripts/ui_smoke.py
 
 check: setup
 	$(VENV_PY) seed.py
