@@ -19,17 +19,19 @@ class AudioPlayerWidget extends ConsumerStatefulWidget {
 }
 
 class _AudioPlayerWidgetState extends ConsumerState<AudioPlayerWidget> {
-  StreamSubscription? _posSub;
-  StreamSubscription? _playSub;
-  StreamSubscription? _speedSub;
-  StreamSubscription? _errSub;
-
   Duration _position = Duration.zero;
-  Duration _duration = const Duration(seconds: 60);
+  Duration _duration = Duration.zero;
   bool _isPlaying = false;
   double _currentSpeed = 1.0;
   bool _hasError = false;
   String? _errorMessage;
+
+  StreamSubscription<Duration>? _posSub;
+  StreamSubscription<bool>? _playSub;
+  StreamSubscription<double>? _speedSub;
+  StreamSubscription<String?>? _errSub;
+
+  final List<double> _speeds = [0.75, 1.0, 1.25, 1.5];
 
   @override
   void initState() {
@@ -47,9 +49,18 @@ class _AudioPlayerWidgetState extends ConsumerState<AudioPlayerWidget> {
         setState(() {
           _hasError = true;
           _errorMessage = 'لا يوجد ملف صوتي معتمد لهذا النص';
+          _isPlaying = false;
         });
       }
       return;
+    }
+
+    if (mounted) {
+      setState(() {
+        _hasError = false;
+        _errorMessage = null;
+        _isPlaying = false;
+      });
     }
 
     try {
@@ -59,27 +70,34 @@ class _AudioPlayerWidgetState extends ConsumerState<AudioPlayerWidget> {
         setState(() {
           _hasError = true;
           _errorMessage = 'تعذر تحميل الملف الصوتي';
+          _isPlaying = false;
         });
       }
+      return;
     }
 
+    _posSub?.cancel();
     _posSub = player.positionStream.listen((pos) {
       if (mounted) setState(() => _position = pos);
     });
     player.durationStream.listen((dur) {
       if (mounted && dur != null) setState(() => _duration = dur);
     });
+    _playSub?.cancel();
     _playSub = player.playingStream.listen((playing) {
-      if (mounted) setState(() => _isPlaying = playing);
+      if (mounted) setState(() => _isPlaying = _hasError ? false : playing);
     });
+    _speedSub?.cancel();
     _speedSub = player.speedStream.listen((speed) {
       if (mounted) setState(() => _currentSpeed = speed);
     });
+    _errSub?.cancel();
     _errSub = player.errorStream.listen((err) {
       if (mounted && err != null) {
         setState(() {
           _hasError = true;
           _errorMessage = 'تعذر تحميل الملف الصوتي';
+          _isPlaying = false;
         });
       }
     });
@@ -95,6 +113,7 @@ class _AudioPlayerWidgetState extends ConsumerState<AudioPlayerWidget> {
   }
 
   void _togglePlay() {
+    if (_hasError) return;
     final player = ref.read(audioPlaybackProvider);
     if (_isPlaying) {
       player.pause();
@@ -104,12 +123,14 @@ class _AudioPlayerWidgetState extends ConsumerState<AudioPlayerWidget> {
   }
 
   void _setSpeed(double speed) {
+    if (_hasError) return;
     final player = ref.read(audioPlaybackProvider);
     player.setSpeed(speed);
     widget.onSpeedChanged?.call(speed);
   }
 
   void _seek(double seconds) {
+    if (_hasError) return;
     final player = ref.read(audioPlaybackProvider);
     player.seek(Duration(seconds: seconds.toInt()));
   }
@@ -145,6 +166,15 @@ class _AudioPlayerWidgetState extends ConsumerState<AudioPlayerWidget> {
                         textDirection: TextDirection.rtl,
                       ),
                     ),
+                    TextButton.icon(
+                      key: const Key('retryLoadAudioButton'),
+                      onPressed: _initPlayer,
+                      icon: const Icon(Icons.refresh, size: 16, color: AppConstants.primaryEmerald),
+                      label: const Text(
+                        'إعادة المحاولة',
+                        style: TextStyle(fontSize: 12, color: AppConstants.primaryEmerald, fontWeight: FontWeight.bold),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -155,7 +185,7 @@ class _AudioPlayerWidgetState extends ConsumerState<AudioPlayerWidget> {
                   key: const Key('playPauseButton'),
                   iconSize: 42,
                   color: _hasError ? Colors.grey : AppConstants.primaryEmerald,
-                  icon: Icon(_isPlaying ? Icons.pause_circle_filled : Icons.play_circle_filled),
+                  icon: Icon((!_hasError && _isPlaying) ? Icons.pause_circle_filled : Icons.play_circle_filled),
                   onPressed: _hasError ? null : _togglePlay,
                 ),
                 Expanded(
@@ -164,7 +194,7 @@ class _AudioPlayerWidgetState extends ConsumerState<AudioPlayerWidget> {
                     max: durationSeconds,
                     activeColor: AppConstants.primaryEmerald,
                     inactiveColor: Colors.grey.shade300,
-                    onChanged: _seek,
+                    onChanged: _hasError ? null : _seek,
                   ),
                 ),
                 Text(
@@ -178,16 +208,15 @@ class _AudioPlayerWidgetState extends ConsumerState<AudioPlayerWidget> {
               alignment: WrapAlignment.center,
               crossAxisAlignment: WrapCrossAlignment.center,
               spacing: 8,
-              runSpacing: 4,
               children: [
-                const Text('سرعة الصوت: ', style: TextStyle(fontSize: 13)),
-                ...[0.75, 1.0, 1.25, 1.5].map((s) {
+                const Text('سرعة الصوت:', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                ..._speeds.map((s) {
                   final isSelected = (_currentSpeed - s).abs() < 0.01;
                   return ChoiceChip(
-                    label: Text('${s}x'),
+                    label: Text('${s}x', style: TextStyle(fontSize: 11, color: isSelected ? Colors.white : Colors.black)),
                     selected: isSelected,
-                    selectedColor: AppConstants.accentGold,
-                    onSelected: (_) => _setSpeed(s),
+                    selectedColor: AppConstants.primaryEmerald,
+                    onSelected: _hasError ? null : (_) => _setSpeed(s),
                   );
                 }),
               ],
