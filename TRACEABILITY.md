@@ -6,7 +6,7 @@
 |---|---|---|---|
 | 1 | DONE | `asghi/domain/user.py::User` | `tests/test_domain.py::test_user_roles_and_registration` |
 | 1.1 | DONE | `asghi/domain/enums.py::UserRole`, `asghi/domain/user.py::User.addRole` | `tests/test_domain.py::test_user_roles_and_registration` |
-| 1.2 | DONE | `asghi/domain/user.py::User.register`, `POST /api/auth/register`, `POST /api/auth/login` | `tests/test_auth_api.py::test_register_and_login_email_or_phone` |
+| 1.2 | DONE | `asghi/domain/user.py::User.register`, `POST /api/auth/register`, `POST /api/auth/login` | `tests/test_auth_api.py::test_register_and_login_email_or_phone`, `tests/test_fix_4_seed_restart.py::test_seed_and_restart_persistence` |
 | 1.3 | DONE | `asghi/domain/user.py::User.completeProfile`, `POST /api/users/profile` | `tests/test_auth_api.py::test_complete_profile` |
 | 2 | DONE | `asghi/domain/passage.py::Passage`, `GET /api/passages` | `tests/test_passage_api.py::test_catalogue_maintenance` |
 | 2.1 | DONE | `asghi/domain/passage.py::Passage`, `asghi/domain/audio_recording.py::AudioRecording`, `asghi/domain/question.py::Question` | `tests/test_domain.py::test_passage_structure` |
