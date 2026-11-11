@@ -11,7 +11,7 @@ else
   FLUTTER ?= $(shell command -v flutter 2>/dev/null || echo /c/flutter/bin/flutter.bat)
 endif
 
-.PHONY: setup check test seed test-backend test-mobile test-live device-check help
+.PHONY: setup check test seed test-backend test-mobile test-live device-check public-check help
 
 help:
 	@echo "Available targets:"
@@ -22,6 +22,7 @@ help:
 	@echo "  make test-live    - Run live end-to-end multi-role server integration tests using .venv"
 	@echo "  make test-mobile  - Run flutter analyze and flutter test"
 	@echo "  make device-check - Run live multi-role UI smoke walkthrough on connected Android device/emulator"
+	@echo "  make public-check - Run live UI smoke walkthrough over public HTTPS tunnel (requires ASGHI_PUBLIC_URL)"
 
 $(VENV_PY):
 	$(PYTHON) -m venv $(VENV_DIR)
@@ -46,6 +47,15 @@ test-mobile:
 
 device-check: seed
 	$(VENV_PY) scripts/ui_smoke.py
+
+ifndef ASGHI_PUBLIC_URL
+public-check:
+	$(error ASGHI_PUBLIC_URL is not set. Please provide ASGHI_PUBLIC_URL=https://<domain> to run public verification)
+else
+public-check: setup
+	@echo "Running public verification against $(ASGHI_PUBLIC_URL)..."
+	$(VENV_PY) scripts/ui_smoke.py
+endif
 
 check: setup
 	$(VENV_PY) seed.py

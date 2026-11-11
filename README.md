@@ -41,8 +41,9 @@ python seed.py
 ### 5. Running the Application
 Start the ASGI web server with Uvicorn:
 ```bash
-python -m uvicorn asghi.api:app --host 0.0.0.0 --port 8000 --reload
+python -m uvicorn asghi.api:app --host 0.0.0.0 --port 8000 --workers 1 --reload
 ```
+> ⚠️ **Worker Concurrency Note**: Always run Uvicorn with `--workers 1`. The Asghi backend uses SQLite immediate transaction coordination and an in-process claim TTL sweeper designed for single-process durability. Multi-worker uvicorn processes would bypass single-process concurrency coordination.
 Once booted:
 - **Arabic-First Web UI**: Navigate to [http://localhost:8000/](http://localhost:8000/) in any desktop or mobile browser.
 - **Interactive OpenAPI Documentation**: Available at [http://localhost:8000/docs](http://localhost:8000/docs).
@@ -86,6 +87,19 @@ To execute the live UI smoke test against the live Android emulator:
    - Seeds sample test data (seed.py).
    - Logs into all 4 roles on the device (Learner, Contributor, Reviewer, Admin).
    - Verifies key UI interactions and saves live screenshots to mobile/docs/live_{learner,contributor,reviewer,admin}.png.
+
+3. Run public HTTPS verification (Cloudflare tunnel or custom domain):
+   `ash
+   ASGHI_PUBLIC_URL=https://invoicing.0xabdul.dev make public-check
+   `
+   This target:
+   - Validates that ASGHI_PUBLIC_URL is set and reachable.
+   - Configures the runtime server address in the mobile app over HTTPS.
+   - Verifies that audio streams cleanly without cleartext violations or audio backend crashes.
+   - Saves public verification evidence to mobile/docs/live_audio_https.png.
+
+> 💡 **Headless CI / Emulator Flags Note**:
+> - For headless or CI emulator runs where no host soundcard exists, the emulator can be run with the -no-audio flag (e.g. emulator -avd <name> -no-audio -no-window) so the Android emulator does not abort due to missing audio hardware devices, while mobile audio state and logic continue cleanly.
 
 ## 👥 Seed Accounts for Testing
 
