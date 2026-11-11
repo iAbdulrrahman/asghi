@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/theme.dart';
+import 'core/api_client.dart';
 import 'providers/providers.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/home_screen.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await ApiClient().initBaseUrl();
   runApp(const ProviderScope(child: AsghiApp()));
 }
 

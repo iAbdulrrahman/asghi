@@ -116,17 +116,11 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
     });
   }
 
-    String _resolveAudioUrl(AudioRecording? rec) {
+  String _resolveAudioUrl(AudioRecording? rec) {
     if (rec == null) return '';
     final url = rec.audioUrl ?? '';
-    if (url.isNotEmpty) {
-      if (url.startsWith('http://') || url.startsWith('https://')) return url;
-      if (url.startsWith('/')) return '${AppConstants.apiBaseUrl}$url';
-      return '${AppConstants.apiBaseUrl}/api/audio/$url';
-    }
-    if (rec.audioFile.isNotEmpty) {
-      return '${AppConstants.apiBaseUrl}/api/audio/${rec.audioFile}';
-    }
+    if (url.isNotEmpty) return AppConstants.resolveAudioUrl(url);
+    if (rec.audioFile.isNotEmpty) return AppConstants.resolveAudioUrl(rec.audioFile);
     return '';
   }
 
