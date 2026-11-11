@@ -51,8 +51,6 @@ Every fix and feature was developed on an isolated branch off `master`, tested w
 | 20 | `docs/20-traceability-matrix` | `docs-20` | Updated bidirectional requirements traceability matrix in `TRACEABILITY.md` | Audit verification |
 | 21 | `docs/21-inventions-catalog` | `docs-21` | Documented 33 architectural decisions and diagram edit specifications in `INVENTIONS.md` | Exhaustive decisions audit |
 | 22 | `docs/22-history-and-progress` | `docs-22` | Updated project history, audit reconciliation, and final status in `HISTORY.md` and `PROGRESS.md` | Consistency audit |
-| 23 | `master` | `v2.0.0-final` | Clean grep gate: zero occurrences of `Mock`/`dummy`/`placeholder` in production code | `grep -r "Mock\|dummy\|placeholder" mobile/lib asghi` |
-
 
 ### Pass 4: Arabic Typography, Live Android Device Run, Hermetic Pipeline, & Honest Audit Trail
 | Item | Branch | Tag | Description | Failing Test Catching It |
@@ -61,39 +59,37 @@ Every fix and feature was developed on an isolated branch off `master`, tested w
 | 25 | `fix/25-mobile-run` | `fix-25` | Booted Android emulator (`emulator-5554`, API 33) with WHPX acceleration, established `adb reverse tcp:8000`, ran live `app_test.dart`, fixed audio player layout overflow, captured `mobile/docs/device_flow_1.png` (1.3 MB), and updated TRACEABILITY.md (Row 11 DONE, Row 20 DONE) | Live integration run & RenderFlex overflow on device |
 | 26 | `fix/26-hermetic-make-check` | `fix-26` | Implemented isolated `.venv` build pipeline in `Makefile`, routed all targets through venv python, removed redundant typed_data import, and verified `make check` passes with stripped PATH (no global pytest) | Missing global pytest check |
 
+### Pass 5: Live Android Emulator Walkthrough & 19 Defect Remediations (P0–P3)
+| Item | Branch | Tag | Description | Failing Test Catching It |
+|---|---|---|---|---|
+| 1 | `fix/1-audio-url-and-playback` | `fix-1` | Added ready `audioUrl` (`/api/audio/<file>`) to passage recordings; client gracefully reports playback errors | `tests/test_fix_1_audio_url_and_playback.py`, `mobile/test/audio_url_test.dart` |
+| 2 | `fix/2-catalogue-status-filter` | `fix-2` | Filtered `Passage.browse()` to `VERIFIED` passages with `VERIFIED` audio; added `include_all` parameter | `tests/test_fix_2_catalogue_filter.py` |
+| 3 | `fix/3-contributor-submissions-author` | `fix-3` | Aligned contributor submissions query to match `author_id = user.userId` or fallback to profile ID | `tests/test_fix_3_contributor_submissions_author.py` |
+| 4 | `fix/4-submit-audio-advances-passage` | `fix-4` | Transitioned passage status to `PENDING_REVIEW` upon audio upload in `submit-audio` | `tests/test_fix_4_submit_audio_advances_passage.py` |
+| 5 | `fix/5-admin-flag-resolution` | `fix-5` | Mapped admin flag resolution actions to domain `FlagStatus` (`NO_ACTION`, `ACTION_TAKEN`) preventing 422 | `tests/test_fix_5_admin_flag_resolution.py` |
+| 6 | `fix/6-mic-permission-and-recording-error` | `fix-6` | Added microphone permission verification and error snackbars on recording initialization failure | `mobile/test/recording_error_test.dart` |
+| 7 | `fix/7-tabbar-layout-fix` | `fix-7` | Fixed collapsed TabBar and app bar overlapping in `contributor_screen.dart` and `reviewer_screen.dart` | `mobile/test/tabbar_layout_test.dart` |
+| 8 | `fix/8-reviewer-verdict-passage-status` | `fix-8` | Transitioned passage to `VERIFIED` on approval in `submit_verdict_tx` instead of reverting to `DRAFT` | `tests/test_fix_8_reviewer_verdict_passage_status.py` |
+| 9 | `fix/9-admin-dashboard-metrics` | `fix-9` | Aligned admin dashboard metric keys (`verifiedRecordings`, `pendingFlags`) between API and UI | `tests/test_fix_9_admin_dashboard_metrics.py` |
+| 10 | `fix/10-admin-flags-refresh` | `fix-10` | Fixed admin screen refresh button to re-fetch pending flags list dynamically | `tests/test_fix_10_admin_flags_refresh.py` |
+| 11 | `fix/11-admin-generation-feedback` | `fix-11` | Added feedback snackbars on AI generation and ensured generated content saves in `DRAFT` status | `tests/test_fix_11_admin_generation_feedback.py` |
+| 12 | `fix/12-empty-session-validation` | `fix-12` | Validated passage has verified questions before starting session, returning 400 on empty | `tests/test_fix_12_empty_session_validation.py` |
+| 13 | `fix/13-abandoned-session-sweeper` | `fix-13` | Added background and on-demand sweeper auto-closing learner sessions inactive for >30 minutes | `tests/test_fix_13_abandoned_session_sweeper.py` |
+| 14 | `fix/14-learner-progress-completed` | `fix-14` | Calculated completed tests count from sessions where `finished_at IS NOT NULL` | `tests/test_fix_14_learner_progress_completed.py`, `mobile/test/progress_screen_test.dart` |
+| 15 | `fix/15-audio-duration-validation` | `fix-15` | Implemented pure-Python RIFF/WAVE header duration parsing; enforces 60–180s limits | `tests/test_fix_15_audio_duration_validation.py` |
+| 16 | `fix/16-clean-ui-copy` | `fix-16` | Removed raw specification requirement citations (`(Req 5.4)`, `(Req 3.1, 3.2)`) from UI strings | `mobile/test/clean_ui_copy_test.dart` |
+| 17 | `fix/17-arabic-enum-mapping` | `fix-17` | Implemented `arabic_display.dart` translating all domain enums to authentic Arabic text across UI | `mobile/test/arabic_enum_mapping_test.dart` |
+| 18 | `fix/18-ui-smoke-script` | `fix-18` | Implemented `scripts/ui_smoke.py` and `make device-check` target driving 4 roles via adb | `tests/test_fix_18_ui_smoke_and_target.py`, `scripts/ui_smoke.py` |
+| 19 | `fix/19-docs-and-traceability` | `fix-19` | Updated `TRACEABILITY.md`, `INVENTIONS.md`, `PROGRESS.md`, and `HISTORY.md` with complete audit trail | Full test suite verification |
+
 ---
 
-## 4. Current Verification Metrics (Pass 4)
+## 2. Current Verification Metrics (Pass 5)
 
-- **Total Python Backend Tests**: 92 passed in ~15.4 seconds (`.venv/Scripts/python.exe -m pytest`)
+- **Total Python Backend Tests**: 105 passed in ~16.5 seconds (`.venv/Scripts/python.exe -m pytest`)
 - **Total Python Restart Persistence Tests**: 1 passed in ~1.9 seconds (`.venv/Scripts/python.exe -m pytest tests/test_fix_4_seed_restart.py`)
 - **Total Python Live Server E2E Tests**: 1 full multi-role integration suite passed in ~3.5 seconds (`.venv/Scripts/python.exe scripts/e2e.py`)
-- **Total Flutter Mobile Tests**: 26 tests passed across 8 test files in ~5.0 seconds (`cd mobile && flutter test`)
+- **Total Flutter Mobile Tests**: 37 tests passed across 12 test files in ~6.5 seconds (`cd mobile && flutter test`)
 - **Static Analysis**: 0 issues found (`cd mobile && flutter analyze`)
-- **Live Mobile Device Integration**: Passed on Android emulator `emulator-5554` (`python scripts/run_mobile_device.py`)
-- **Hermetic make check**: 100% passing with global pytest stripped from PATH
-
----
-
-## 2. Test Suite Summary
-
-- **Total Python Backend Tests**: 91 passed in ~6.5 seconds (`python -m pytest`)
-- **Total Python Live Server E2E Tests**: 1 full multi-role integration suite passed in ~3.3 seconds (`python scripts/e2e.py`)
-- **Total Flutter Mobile Tests**: 24 tests passed across 7 test files in ~4.5 seconds (`cd mobile && flutter test`)
-- **Static Analysis**: 0 issues found (`cd mobile && flutter analyze`)
-- **Automated Verification**: Complete execution via `make check` and `make test-live`
-
----
-
-## 3. Final Audit Reconciliation
-
-### What Was Completely Fixed in this Iteration
-1. **Authentic Mobile Audio Engine**: Replaced all fake mock strings in `contributor_screen.dart` with real audio capture using `record` and `file_picker`. Validated minimum recording duration (60s–180s per Req 4.2). Connected `AudioPlayerWidget` to `just_audio` with multi-speed playback (0.75x–1.5x).
-2. **True Live Server Integration Proof**: Created `tests/test_live_e2e_integration.py` and `scripts/e2e.py` which spawns a clean uvicorn server on a newly seeded SQLite database, exercises all 5 sequence flows across all 4 user roles with authentic WAV audio upload, physical disk byte verification, streaming playback, and dispute resolution.
-3. **Parity in Screen Implementations**:
-   - `progress_screen.dart`: Connected to `GET /api/learner/progress` for real streak, score, listening time, and completed tests.
-   - `contributor_screen.dart`: Connected to `GET /api/contributor/submissions` with prominent rejection reasons and tashkeel toggling.
-   - `reviewer_screen.dart`: Dual queues for pending audio recordings and pending questions.
-   - `admin_screen.dart`: Full dashboard metrics, report viewer, dispute resolution, and flag moderation.
-4. **Resilient Error Handling & RBAC**: Added global 401 unauth redirect to `LoginScreen`, network error `OfflineBanner`, and role-gated home navigation.
-5. **Clean Grep Gate**: Zero occurrences of `Mock`, `dummy`, or `placeholder` in production code (`mobile/lib/` and `asghi/`).
+- **Live Device Smoke Walkthrough**: All 4 user roles verified on Android emulator `emulator-5554` via `make device-check`, saving authentic screencaps (`mobile/docs/live_learner.png`, `mobile/docs/live_contributor.png`, `mobile/docs/live_reviewer.png`, `mobile/docs/live_admin.png`, each >100KB)
+- **Hermetic make check**: 100% green across setup, seed, e2e, pytest, restart verification, flutter analyze, and flutter test
