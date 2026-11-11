@@ -36,4 +36,27 @@ def test_ui_smoke_has_behavioral_assertions_and_no_size_checks():
     # 6. Structured PASS/FAIL reporting and non-zero exit on failure
     assert "[PASS]" in code, "ui_smoke.py must output structured [PASS] lines"
     assert "[FAIL]" in code, "ui_smoke.py must output structured [FAIL] lines"
-    assert "sys.exit(1)" in code or "raise SystemExit" in code, "ui_smoke.py must exit non-zero on assertion failure"
+    assert "sys.exit(" in code or "raise SystemExit" in code, "ui_smoke.py must exit non-zero on assertion failure"
+
+
+def test_assertion_tracker_behavior():
+    import sys
+    sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "scripts")))
+    from ui_smoke import AssertionTracker
+
+    tracker = AssertionTracker()
+    assert tracker.check(True, "Passing condition") is True
+    assert tracker.passed == 1
+    assert tracker.failed == 0
+
+    assert tracker.check(False, "Failing condition") is False
+    assert tracker.passed == 1
+    assert tracker.failed == 1
+
+    # Non-zero exit code when failed > 0
+    assert tracker.summary() == 1
+
+    clean_tracker = AssertionTracker()
+    clean_tracker.check(True, "All good")
+    assert clean_tracker.summary() == 0
+
