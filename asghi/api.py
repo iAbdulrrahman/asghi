@@ -377,6 +377,7 @@ def browse_passages(
                     "contentId": str(r.contentId),
                     "recordingId": str(r.contentId),
                     "audioFile": r.audioFile,
+                    "audioUrl": f"/api/audio/{os.path.basename(r.audioFile)}" if r.audioFile else None,
                     "attribution": r.attribution.value,
                     "status": r.status.value,
                 }

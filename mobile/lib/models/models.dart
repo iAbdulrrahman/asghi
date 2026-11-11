@@ -69,6 +69,7 @@ class User {
 class AudioRecording {
   final String recordingId;
   final String audioFile;
+  final String? audioUrl;
   final double durationSeconds;
   final String status;
   final String attribution;
@@ -76,6 +77,7 @@ class AudioRecording {
   AudioRecording({
     required this.recordingId,
     required this.audioFile,
+    this.audioUrl,
     required this.durationSeconds,
     required this.status,
     required this.attribution,
@@ -85,6 +87,7 @@ class AudioRecording {
     return AudioRecording(
       recordingId: json['recordingId'] ?? json['contentId'] ?? '',
       audioFile: json['audioFile'] ?? '',
+      audioUrl: json['audioUrl'],
       durationSeconds: (json['durationSeconds'] ?? 60.0).toDouble(),
       status: json['status'] ?? 'PENDING_REVIEW',
       attribution: json['attribution'] ?? 'SHOW_NAME',

@@ -115,6 +115,20 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
     });
   }
 
+    String _resolveAudioUrl(AudioRecording? rec) {
+    if (rec == null) return '';
+    final url = rec.audioUrl ?? '';
+    if (url.isNotEmpty) {
+      if (url.startsWith('http://') || url.startsWith('https://')) return url;
+      if (url.startsWith('/')) return '${AppConstants.apiBaseUrl}$url';
+      return '${AppConstants.apiBaseUrl}/api/audio/$url';
+    }
+    if (rec.audioFile.isNotEmpty) {
+      return '${AppConstants.apiBaseUrl}/api/audio/${rec.audioFile}';
+    }
+    return '';
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -135,7 +149,7 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
           children: [
             // Audio Player
             AudioPlayerWidget(
-              audioUrl: widget.passage.verifiedAudio?.audioFile ?? '',
+              audioUrl: _resolveAudioUrl(widget.passage.verifiedAudio),
             ),
             const SizedBox(height: 16),
 
