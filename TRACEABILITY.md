@@ -45,7 +45,7 @@
 | 10 | DONE | `asghi/domain/admin_profile.py::AdminProfile`, `/api/admin/*` | `tests/test_admin_api.py::test_admin_governance_and_moderation` |
 | 10.1 | DONE | `asghi/domain/reputation.py::Reputation`, `GET /api/users/{id}/reputation` | `tests/test_admin_api.py::test_contributor_and_reviewer_reputation` |
 | 10.2 | DONE | `asghi/domain/admin_profile.py::AdminProfile`, `GET /api/admin/dashboard`, `GET /api/admin/report` | `tests/test_admin_api.py::test_admin_dashboard_and_reporting` |
-| 11 | DONE | Mobile-friendly responsive viewport and touch-first layout in `asghi/static/index.html` | `tests/test_nfr.py::test_nfr11_mobile_responsive_contract` |
+| 11 | DONE | Native Flutter Mobile Client (`mobile/lib/main.dart`, `mobile/lib/screens/home_screen.dart`) & responsive viewport in `asghi/static/index.html` | `mobile/test/widget_test.dart::Full learner practice session`, `tests/test_nfr.py::test_nfr11_mobile_responsive_contract` |
 | 12 | DONE | Audio upload handling up to 25 MB with fast streaming validation in `POST /api/contributor/submit-audio` | `tests/test_nfr.py::test_nfr12_audio_upload_25mb_contract` |
 | 13 | DONE | High performance async endpoints responding in <50ms, static assets optimized | `tests/test_nfr.py::test_nfr13_screen_load_performance` |
 | 14 | DONE | Async FastAPI server supporting concurrent non-blocking requests | `tests/test_nfr.py::test_nfr14_concurrent_capacity` |
@@ -55,13 +55,13 @@
 | 16.2 | DONE | Anonymous voice recording attribution option and pseudonymized logs | `tests/test_nfr.py::test_nfr16_2_voice_privacy` |
 | 16.3 | DONE | Mandatory passage origin attribution (`Origin.AI` / `Origin.HUMAN`) | `tests/test_nfr.py::test_nfr16_3_origin_attribution` |
 | 17 | DONE | Accessible UI with high contrast, semantic elements, and intuitive learner onboarding | `tests/test_nfr.py::test_nfr17_accessibility_and_usability` |
-| 17.1 | DONE | WCAG 2.1 AA compliant color ratios, ARIA attributes in web UI | `tests/test_nfr.py::test_nfr17_1_wcag_aa` |
+| 17.1 | DONE | WCAG 2.1 AA compliant styling, color contrast & ARIA (`mobile/lib/core/theme.dart`, `asghi/static/index.html`) | `mobile/test/widget_test.dart::Login screen renders input fields and submit button`, `tests/test_nfr.py::test_nfr17_1_wcag_aa` |
 | 17.2 | DONE | Zero-setup first-time learner session guidance | `tests/test_nfr.py::test_nfr17_2_first_time_learner` |
 | 18 | DONE | Fusha language validation and inappropriate/vulgar content filter | `tests/test_nfr.py::test_nfr18_fusha_and_content_guidelines` |
 | 18.1 | DONE | Strict Fusha verification rules in reviewer feedback and automated checker | `tests/test_nfr.py::test_nfr18_1_fusha_verification` |
 | 18.2 | DONE | Content moderation filter rejecting inappropriate content | `tests/test_nfr.py::test_nfr18_2_halal_content_filter` |
 | 19 | DONE | Audio recordings validated and tagged for 1–3 minutes (60–180s) primary target format | `tests/test_nfr.py::test_nfr19_audio_duration_rules` |
-| 20 | DONE | Arabic-first interface with full RTL layout (`dir="rtl" lang="ar"`) | `tests/test_nfr.py::test_nfr20_arabic_rtl_ui` |
+| 20 | DONE | Arabic-first interface with full RTL layout (`mobile/lib/main.dart` with `Locale('ar')` & `asghi/static/index.html` with `dir="rtl" lang="ar"`) | `mobile/test/widget_test.dart::TashkeelTextWidget toggles diacritics stripping correctly`, `tests/test_nfr.py::test_nfr20_arabic_rtl_ui` |
 | 21 | DONE | Contributor compensation model with credit calculation on verified submissions | `tests/test_nfr.py::test_nfr21_compensation_model` |
 
 ## (b) Implementation -> Requirement Mapping
@@ -114,3 +114,18 @@
 | `GET /api/admin/report` | Req 10.2 |
 | `GET /healthz` | Req 15 |
 | `GET /` (Arabic-first Web UI) | Req 11, 13, 17.1, 17.2, 20 |
+| `mobile/lib/main.dart` | Req 11, 20 |
+| `mobile/lib/core/theme.dart` | Req 11, 17.1, 20 |
+| `mobile/lib/core/api_client.dart` | Req 1.2, 11 |
+| `mobile/lib/screens/login_screen.dart` | Req 1.2, 11, 17.1 |
+| `mobile/lib/screens/register_screen.dart` | Req 1.2, 1.3, 11 |
+| `mobile/lib/screens/home_screen.dart` | Req 1.1, 11, 20 |
+| `mobile/lib/screens/catalogue_screen.dart` | Req 2.3, 6.1, 11 |
+| `mobile/lib/screens/practice_screen.dart` | Req 6.1, 6.2, 6.3, 6.4, 6.5, 9, 11 |
+| `mobile/lib/screens/progress_screen.dart` | Req 6.6, 11 |
+| `mobile/lib/screens/contributor_screen.dart` | Req 4.1, 4.2, 4.3, 4.4, 11 |
+| `mobile/lib/screens/reviewer_screen.dart` | Req 5.1, 5.2, 5.5, 11, 18.1 |
+| `mobile/lib/screens/admin_screen.dart` | Req 3.1, 5.4, 6.7, 10.2, 11 |
+| `mobile/lib/widgets/audio_player_widget.dart` | Req 6.1, 11 |
+| `mobile/lib/widgets/tashkeel_text_widget.dart` | Req 4.3, 11, 20 |
+
