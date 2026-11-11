@@ -12,6 +12,7 @@ class ApiClient {
   String? inMemoryToken;
   bool useSecureStorage = true;
   void Function()? onUnauthorized;
+  void Function(bool isOffline)? onNetworkError;
 
   ApiClient._internal() {
     dio = Dio(
@@ -35,6 +36,10 @@ class ApiClient {
           }
           return handler.next(options);
         },
+        onResponse: (response, handler) {
+          onNetworkError?.call(false);
+          return handler.next(response);
+        },
         onError: (DioException error, handler) async {
           if (error.response?.statusCode == 401) {
             inMemoryToken = null;
@@ -44,6 +49,11 @@ class ApiClient {
               } catch (_) {}
             }
             onUnauthorized?.call();
+          }
+          if (error.type == DioExceptionType.connectionTimeout ||
+              error.type == DioExceptionType.connectionError ||
+              error.type == DioExceptionType.receiveTimeout) {
+            onNetworkError?.call(true);
           }
           return handler.next(error);
         },

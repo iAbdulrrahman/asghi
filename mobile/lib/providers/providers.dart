@@ -44,6 +44,12 @@ class AuthNotifier extends Notifier<AuthState> {
   @override
   AuthState build() {
     apiClient = ref.watch(apiClientProvider);
+    apiClient.onUnauthorized = () {
+      logout();
+    };
+    apiClient.onNetworkError = (offline) {
+      ref.read(isOfflineProvider.notifier).setOffline(offline);
+    };
     _checkInitialAuth();
     return AuthState();
   }
@@ -147,11 +153,29 @@ class AuthNotifier extends Notifier<AuthState> {
     await apiClient.clearToken();
     state = AuthState();
   }
+
+  void setAuthenticatedUserForTesting(User user, UserRole role) {
+    state = AuthState(
+      user: user,
+      activeRole: role,
+      isAuthenticated: true,
+      isLoading: false,
+    );
+  }
 }
 
 final apiClientProvider = Provider<ApiClient>((ref) => ApiClient());
 
 final authProvider = NotifierProvider<AuthNotifier, AuthState>(AuthNotifier.new);
+
+class OfflineNotifier extends Notifier<bool> {
+  @override
+  bool build() => false;
+
+  void setOffline(bool offline) => state = offline;
+}
+
+final isOfflineProvider = NotifierProvider<OfflineNotifier, bool>(OfflineNotifier.new);
 
 // --- Catalogue Provider ---
 class CatalogueFilterNotifier extends Notifier<String?> {

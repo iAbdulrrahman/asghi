@@ -25,6 +25,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final authState = ref.watch(authProvider);
     final user = authState.user;
     final activeRole = authState.activeRole;
+    final isOffline = ref.watch(isOfflineProvider);
 
     // Build tabs based on active role
     final List<Widget> tabs = [];
@@ -90,7 +91,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       ),
       body: Column(
         children: [
-          const OfflineBanner(isOffline: false),
+          OfflineBanner(
+            isOffline: isOffline,
+            onRetry: () => ref.read(isOfflineProvider.notifier).setOffline(false),
+          ),
           Expanded(child: tabs.isNotEmpty ? tabs[safeIndex] : const SizedBox.shrink()),
         ],
       ),
