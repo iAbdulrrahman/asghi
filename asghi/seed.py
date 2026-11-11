@@ -1,3 +1,6 @@
+import logging
+from typing import Optional, Dict
+logger = logging.getLogger(__name__)
 """Database and domain seed script for اصغِ (Asghi).
 Seeds sample passages, questions across all difficulties, and users for all 4 roles.
 """
@@ -24,8 +27,35 @@ UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "..", "uploads", "audio")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 
-def seed_database(db_path: str = "asghi.db"):
+def seed_database(db_path: str = "asghi.db", password_overrides: Optional[Dict[str, str]] = None):
     repo = Repository(db_path=db_path)
+
+    # Resolve passwords with env var and per-role overrides
+    env_default_pass = os.environ.get("ASGHI_SEED_PASSWORD")
+    current_env = os.environ.get("ENVIRONMENT", "development").lower()
+
+    if not env_default_pass and not password_overrides and current_env != "development":
+        logger.warning(
+            "SECURITY WARNING: Seeding default credentials into non-development environment (%s)! "
+            "Please configure ASGHI_SEED_PASSWORD or rotate credentials immediately.",
+            current_env,
+        )
+
+    def resolve_password(identifier: str, role_name: str, default_pass: str) -> str:
+        if password_overrides:
+            if identifier in password_overrides:
+                return password_overrides[identifier]
+            if role_name in password_overrides:
+                return password_overrides[role_name]
+        if env_default_pass:
+            return env_default_pass
+        return default_pass
+
+    admin_pass = resolve_password("admin@asghi.org", "admin", "AdminPass123!")
+    reviewer_pass = resolve_password("reviewer@asghi.org", "reviewer", "ReviewerPass123!")
+    reviewer2_pass = resolve_password("reviewer2@asghi.org", "reviewer", "ReviewerPass123!")
+    contributor_pass = resolve_password("contributor@asghi.org", "contributor", "ContributorPass123!")
+    learner_pass = resolve_password("learner@asghi.org", "learner", "LearnerPass123!")
 
     # Clear current registries
     User._registry.clear()
@@ -46,7 +76,7 @@ def seed_database(db_path: str = "asghi.db"):
         displayName="مدير المنصة",
         arabicLevel=Level.C2,
     )
-    admin_user.register("admin@asghi.org", "AdminPass123!")
+    admin_user.register("admin@asghi.org", admin_pass)
     admin_user.completeProfile("مدير المنصة", Level.C2, UserRole.ADMIN)
 
     # Reviewer (Specialist)
@@ -55,7 +85,7 @@ def seed_database(db_path: str = "asghi.db"):
         displayName="أستاذ فصيح (مراجع متخصص)",
         arabicLevel=Level.C2,
     )
-    reviewer_user.register("reviewer@asghi.org", "ReviewerPass123!")
+    reviewer_user.register("reviewer@asghi.org", reviewer_pass)
     reviewer_user.completeProfile("أستاذ فصيح", Level.C2, UserRole.REVIEWER)
     # Grant specialist status
     for prof in reviewer_user.userProfiles:
@@ -68,7 +98,7 @@ def seed_database(db_path: str = "asghi.db"):
         displayName="مراجع لغوي عام",
         arabicLevel=Level.C1,
     )
-    general_rev_user.register("reviewer2@asghi.org", "ReviewerPass123!")
+    general_rev_user.register("reviewer2@asghi.org", reviewer2_pass)
     general_rev_user.completeProfile("مراجع لغوي عام", Level.C1, UserRole.REVIEWER)
 
     # Contributor
@@ -77,7 +107,7 @@ def seed_database(db_path: str = "asghi.db"):
         displayName="القارئ المتطوع",
         arabicLevel=Level.C1,
     )
-    contributor_user.register("contributor@asghi.org", "ContributorPass123!")
+    contributor_user.register("contributor@asghi.org", contributor_pass)
     contributor_user.completeProfile("القارئ المتطوع", Level.C1, UserRole.CONTRIBUTOR)
 
     # Learner
@@ -87,7 +117,7 @@ def seed_database(db_path: str = "asghi.db"):
         displayName="سعيد المتعلم",
         arabicLevel=Level.B1,
     )
-    learner_user.register("learner@asghi.org", "LearnerPass123!")
+    learner_user.register("learner@asghi.org", learner_pass)
     learner_user.completeProfile("سعيد المتعلم", Level.B1, UserRole.LEARNER)
 
     # 3. Seed Passages
@@ -211,3 +241,6 @@ def seed_database(db_path: str = "asghi.db"):
 
 if __name__ == "__main__":
     seed_database()
+
+
+seed = seed_database
