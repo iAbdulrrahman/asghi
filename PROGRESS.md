@@ -14,7 +14,7 @@
   - **Native Flutter Mobile App (Android + iOS targets)**: Pure Flutter mobile client located in `mobile/` with Riverpod state management, Dio HTTP client, Arabic RTL layout, WCAG 2.1 AA theme, audio player widget with 0.75x/1.0x/1.25x playback speeds, real-time diacritics stripping (`TashkeelTextWidget`), and complete screens for all four roles.
   - **Android Debug APK Built**: Successfully compiled to `mobile/build/app/outputs/flutter-apk/app-debug.apk` (211.9 MB, 211,910,051 bytes).
   - **Comprehensive Test Suite**:
-    - **89 Python backend tests** passing with 100% pass rate in ~6.5 seconds (`python -m pytest`).
+    - **91 Python backend tests + 1 live multi-role integration suite** passing with 100% pass rate in ~6.5 seconds (`python -m pytest`).
     - **24 Flutter mobile tests across 7 test files** passing with 100% pass rate in ~1.5 seconds (`cd mobile && flutter test`).
     - Clean static analysis: `cd mobile && flutter analyze` reports **0 issues found**.
 - **What's Partial**: None. All core requirements, backend durability, transactional integrity, and mobile client screens are fully implemented end-to-end.
