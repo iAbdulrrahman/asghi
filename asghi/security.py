@@ -58,6 +58,15 @@ def get_current_user(
         )
 
     user_id_str = payload["sub"]
+    from asghi.repository import get_repository
+    try:
+        user_uuid = UUID(user_id_str)
+        user = get_repository().get_user_by_id(user_uuid)
+        if user:
+            return user
+    except ValueError:
+        pass
+
     for u in User._registry:
         if str(u.userId) == user_id_str:
             return u

@@ -6,6 +6,8 @@ from fastapi.testclient import TestClient
 from asghi.api import app
 from asghi.domain.enums import UserRole, Level
 from asghi.domain.user import User
+from asghi.domain.passage import Passage
+
 
 client = TestClient(app)
 
@@ -13,8 +15,14 @@ client = TestClient(app)
 @pytest.fixture(autouse=True)
 def clean_registry():
     User._registry.clear()
+    Passage._registry.clear()
+    from asghi.repository import get_repository
+    get_repository().clear_all_tables()
     yield
     User._registry.clear()
+    Passage._registry.clear()
+    get_repository().clear_all_tables()
+
 
 
 def test_register_and_login_email_or_phone():
