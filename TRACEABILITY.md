@@ -32,9 +32,9 @@
 | 6.2 | DONE | `asghi/domain/learner_profile.py::LearnerProfile.startSession`, `POST /api/learner/sessions` | `tests/test_learner_api.py::test_start_and_run_listening_test` |
 | 6.3 | DONE | `asghi/domain/passage.py::Passage.getQuestion`, `asghi/domain/enums.py::Difficulty` | `tests/test_domain.py::test_passage_difficulty_tiers` |
 | 6.4 | DONE | `asghi/domain/test_session.py::TestSession.adaptDifficulty` | `tests/test_learner_api.py::test_adaptive_difficulty_progression` |
-| 6.5 | DONE | `asghi/domain/question_response.py::QuestionResponse.evaluate`, `asghi/domain/test_session.py::TestSession.submitAnswer` | `tests/test_learner_api.py::test_score_responses_and_explanations` |
+| 6.5 | DONE | `asghi/domain/question_response.py::QuestionResponse.evaluate`, `asghi/domain/test_session.py::TestSession.submitAnswer`, `asghi/repository.py::record_answer_tx` | `tests/test_learner_api.py::test_score_responses_and_explanations`, `tests/test_fix_7_transactions.py::test_answer_atomic_transaction_rollback` |
 | 6.6 | DONE | `asghi/domain/learner_progress.py::LearnerProgress.update`, `GET /api/learner/progress` | `tests/test_learner_api.py::test_learner_progress_tracking` |
-| 6.7 | DONE | `asghi/domain/learner_profile.py::LearnerProfile.flagContent`, `POST /api/learner/flag` | `tests/test_flagging_api.py::test_flag_problematic_content` |
+| 6.7 | DONE | `asghi/domain/learner_profile.py::LearnerProfile.flagContent`, `POST /api/learner/flag`, `asghi/repository.py::resolve_flag_tx` | `tests/test_flagging_api.py::test_flag_problematic_content`, `tests/test_fix_7_transactions.py::test_flag_resolution_atomic_transaction` |
 | 6.8 | OUT-OF-SCOPE | Offline local database sync marked OUT-OF-SCOPE per specification definition of done; API offline package manifest provided at `GET /api/passages/{id}/offline-package` | `tests/test_learner_api.py::test_offline_package_endpoint` |
 | 7 | DONE | `asghi/domain/question_author.py::QuestionAuthor`, `POST /api/questions` | `tests/test_question_authoring.py::test_question_authoring_all_roles` |
 | 7.1 | DONE | `ContributorProfile.authorQuestion`, `ReviewerProfile.authorQuestion`, `AdminProfile.authorQuestion` | `tests/test_question_authoring.py::test_author_question_roles` |
