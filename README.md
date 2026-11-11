@@ -14,7 +14,8 @@ A full-stack, crowdsourced Arabic listening practice system built from the domai
 ### 2. Installation
 Install project dependencies with:
 ```bash
-python -m pip install fastapi uvicorn pydantic PyJWT python-multipart pytest httpx
+make setup
+# Or: pip install -r requirements.txt && cd mobile && flutter pub get
 ```
 
 ### 3. Configuration & Environment Variables
