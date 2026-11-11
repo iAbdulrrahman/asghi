@@ -5,16 +5,22 @@
   - **Full Backend & REST API**: High-performance asynchronous FastAPI server providing 40 endpoints, fully role-gated per `h_uc.puml` with JWT authentication and strict access control for Learner, Contributor, Reviewer, and Admin.
   - **Complete Domain Model**: All 19 classes, 8 enums, and 47 operations from `class-diagram.puml` implemented with identical names, types, and signatures.
   - **All 5 Authoritative Sequences**:
-    1. Claim cycle (`h_seq1_claim_cycle`): 72h TTL expiration, mutual exclusion, tashkeel toggle, audio submission with clock stop.
-    2. Review verdict (`h_seq2_review_verdict`): Self-review blocking, Fusha/dialect verification, dual threshold (1 specialist vs 3 general), dispute escalation.
-    3. Learner practice session (`h_seq3_learner_session`): Session lifecycle, audio playback speed, adaptive question difficulty (Easy <-> Medium <-> Hard), real-time scoring, explanation delivery, progress tracking.
-    4. Registration and profile (`h_seq4_registration`): Multi-role user creation, profile completion, role profiles instantiation.
-    5. Flagging and moderation (`h_seq5_flagging`): Content flagging, admin review, and `FLAGGED` status transition.
-  - **Persistence & Seeding**: SQLite repository with WAL mode (`asghi.db`) and one-command seed script (`python -m asghi.seed`) seeding test accounts for all four roles, sample passages, audio recordings, and tiered questions.
-  - **Arabic-First Responsive Web UI**: Mobile-friendly, high-contrast, WCAG 2.1 AA compliant RTL interface served directly at `/` with interactive role switcher and full learner/contributor/reviewer/admin workflows.
-  - **Comprehensive Test Suite**: 65 tests in 11 test modules executed via `python -m pytest` with 100% pass rate in ~2 seconds.
-- **What's Partial**: None. All core features are fully implemented end-to-end.
-- **What's Blocked**: None. (Req 6.8 offline sync is explicitly marked OUT-OF-SCOPE per specification definition of done; API offline manifest is implemented at `GET /api/passages/{id}/offline-package`).
+    1. Claim cycle (`h_seq1_claim_cycle`): 72h TTL expiration, mutual exclusion with 409 Conflict, non-extendable claims, tashkeel toggle, audio submission with clock stop.
+    2. Review verdict (`h_seq2_review_verdict`): Self-review blocking, Fusha/dialect verification, dual threshold (1 specialist vs 3 general), dispute escalation, atomic transaction (`submit_verdict_tx`).
+    3. Learner practice session (`h_seq3_learner_session`): Session lifecycle, audio playback speed, adaptive question difficulty (Easy <-> Medium <-> Hard), real-time scoring, explanation delivery, progress tracking, atomic answer recording (`record_answer_tx`).
+    4. Registration and profile (`h_seq4_registration`): Multi-role user creation, profile completion, role profiles instantiation, persistent rehydration across server restarts.
+    5. Flagging and moderation (`h_seq5_flagging`): Content flagging, admin review, atomic flag resolution (`resolve_flag_tx`), and `FLAGGED` status transition.
+  - **Persistence & Seeding**: SQLite repository with WAL mode (`asghi.db`), full foreign key cascades, unique claim constraints, and one-command seed script (`python seed.py`) seeding test accounts for all four roles, sample passages, audio recordings, and tiered questions.
+  - **Native Flutter Mobile App (Android + iOS targets)**: Pure Flutter mobile client located in `mobile/` with Riverpod state management, Dio HTTP client, Arabic RTL layout, WCAG 2.1 AA theme, audio player widget with 0.75x/1.0x/1.25x playback speeds, real-time diacritics stripping (`TashkeelTextWidget`), and complete screens for all four roles.
+  - **Android Debug APK Built**: Successfully compiled to `mobile/build/app/outputs/flutter-apk/app-debug.apk` (176.5 MB).
+  - **Comprehensive Test Suite**:
+    - **89 Python backend tests** passing with 100% pass rate in ~6.5 seconds (`python -m pytest`).
+    - **5 Flutter mobile tests** passing with 100% pass rate in ~1.5 seconds (`cd mobile && flutter test`).
+    - Clean static analysis: `cd mobile && flutter analyze` reports **0 issues found**.
+- **What's Partial**: None. All core requirements, backend durability, transactional integrity, and mobile client screens are fully implemented end-to-end.
+- **What's Blocked**:
+  - `mobile/ios/`: `BLOCKED-BY-PLATFORM: macOS required to build iOS target`. Flutter iOS target is fully scaffolded and committed, but compilation requires Xcode on macOS.
+  - Requirement 6.8: Offline local database sync is marked `OUT-OF-SCOPE` per specification definition of done (manifest endpoint implemented at `GET /api/passages/{id}/offline-package` with offline package download).
 - **The Five Most Important Things the Owners Must Decide or Fix in Their Diagrams**:
   1. **Post-Flag Lifecycle for `ContentStatus.FLAGGED`**: In Sequence 5 (`h_seq5_flagging`), when an Admin takes action, `ReviewableContent.markFlagged()` sets status to `FLAGGED`. However, the diagrams do not specify exit transitions from `FLAGGED` (e.g. unflag/re-verify, permanent deletion, or contributor remediation). An explicit state machine diagram for `ContentStatus` should be added.
   2. **Persistence Repository Pattern**: The class diagram treats queries like `Passage.browse()` and `Passage.awaitingRecording()` as static class methods in memory. The owners should introduce a repository stereotype (e.g., `<<Repository>> PassageRepository`) or persistence interface to formalize the database mapping contract.
@@ -24,30 +30,46 @@
 
 ---
 
-## Stack Decision
-- **Language & Runtime**: Python 3.14 + FastAPI + Uvicorn (async high-performance REST API)
+## Stack Decisions
+- **Backend & REST API**: Python 3.14 + FastAPI + Uvicorn + Pydantic v2.
 - **Domain Modeling**: Direct object-oriented classes mirroring `class-diagram.puml` exactly with 100% adherence to all 19 classes, 8 enums, and 47 operations.
-- **Persistence**: SQLite with WAL mode + Data Access Layer / Repository pattern (`asghi/repository.py`) ensuring domain model integrity and atomic transactions.
-- **Authentication**: JWT Bearer tokens (PyJWT) with PBKDF2/SHA-256 password hashing, role gating according to `h_uc.puml`.
-- **Frontend / Client UI**: Lightweight responsive Arabic-first RTL Single Page Application (HTML5/CSS3/Vanilla JS) served directly by FastAPI at `/`, meeting WCAG 2.1 AA and mobile responsiveness.
-- **Testing**: `pytest` comprehensive test suite covering all functional requirements, sequence flows, and non-functional requirements.
+- **Persistence**: SQLite with WAL mode + repository pattern (`asghi/repository.py`), strict constraints (`active_claims`, `UNIQUE(reviewer_id, content_id)`, `CHECK(author_id IS NULL <=> origin = 'AI')`), and atomic transactions (`submit_verdict_tx`, `record_answer_tx`, `resolve_flag_tx`).
+- **Authentication**: JWT Bearer tokens (PyJWT) with PBKDF2/SHA-256 password hashing, configurable `SECRET_KEY` from environment with production fail-fast check.
+- **Mobile Client**: Flutter 3.47.0 / Dart 3.13.0, Flutter Riverpod 3.0, Dio HTTP client with JWT interceptors, Arabic RTL typography, and WCAG 2.1 AA accessible color palette.
+- **Testing**: `pytest` for backend unit, integration, concurrency, and durability tests; `flutter test` for mobile widget and end-to-end user journey tests; unified `Makefile` target `make check`.
 
 ---
 
-### Flutter Mobile Application (Items 20-26)
-- **Status**: Scaffolded and Configured (mobile/)
-- **Android Target**: Active (org.asghi.mobile)
-- **iOS Target**: Scaffolded (mobile/ios/); BLOCKED-BY-PLATFORM: macOS required to build iOS target
-- **Platforms Supported**: Android (ndroid/), iOS (ios/)
+## Deliverables & Run Instructions
 
-### Flutter Mobile Client Bootstrap (Item 19)
-- **Status**: Verified and Operational
-- **Flutter SDK**: 3.47.0 • channel stable
-- **Dart SDK**: 3.13.0 • DevTools 2.60.0
-- **Android SDK**: version 36.0.0 detected at `%LOCALAPPDATA%\Android\Sdk`
-- **PATH**: `C:\flutter\bin` added to User environment PATH
+### 1. Unified Automated Verification
+Run all automated checks in one command:
+```bash
+make check
+```
+Or run individual verification steps:
+- Seed database: `python seed.py`
+- Run backend pytest suite: `python -m pytest`
+- Verify restart persistence: `python tests/test_fix_4_seed_restart.py`
+- Analyze mobile app: `cd mobile && flutter analyze`
+- Run mobile tests: `cd mobile && flutter test`
 
-## Increment History & Commits
-- `8ebbf40`: `feat(domain): implement full domain model, enums, operations, and sequence diagrams 1-5 [Req 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]`
-- `0c70f94`: `feat(api, ui, tests): implement API, repository, Arabic RTL UI, and test suite [Req 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, NFR 11-21]`
-- Current: Final cleanup, verification of Definition of Done, zero TODOs/placeholders, 65 passing tests.
+### 2. Starting the Backend Server
+```bash
+python -m uvicorn asghi.api:app --reload --host 127.0.0.1 --port 8000
+```
+- Interactive API documentation: `http://127.0.0.1:8000/docs`
+- Health check probe: `http://127.0.0.1:8000/healthz`
+- Responsive Arabic Web UI: `http://127.0.0.1:8000/`
+
+### 3. Running the Mobile App
+```bash
+cd mobile
+flutter run
+```
+To build debug APK:
+```bash
+cd mobile
+flutter build apk --debug
+# Output: mobile/build/app/outputs/flutter-apk/app-debug.apk
+```
