@@ -1107,7 +1107,7 @@ def get_audio_file(filename: str):
     path = os.path.join(UPLOAD_DIR, filename)
     if os.path.exists(path):
         return FileResponse(path, media_type="audio/mpeg")
-    # Return placeholder audio or 404
+    # Return 404 if file does not exist
     raise HTTPException(status_code=404, detail="ملف الصوت غير موجود")
 
 
