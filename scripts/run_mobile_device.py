@@ -7,6 +7,8 @@ import urllib.request
 import subprocess
 import shutil
 
+sys.path.insert(0, os.path.abspath("."))
+
 ADB_BIN = os.path.expandvars(r"%LOCALAPPDATA%\Android\Sdk\platform-tools\adb.exe")
 FLUTTER_BIN = r"C:\flutter\bin\flutter.bat"
 if not os.path.exists(FLUTTER_BIN):

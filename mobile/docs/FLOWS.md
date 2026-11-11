@@ -3,13 +3,27 @@
 منصة **اصغِ** (Crowdsourced Arabic Listening Practice)
 
 > [!NOTE]
-> **ملاحظة توثيقية حول اللقطات المرفقة (Visual Evidence & Reproduction)**:
-> الصور التوضيحية المرفقة في هذا المستند (`flow_1.png` إلى `flow_5.png`) هي لقطات فحص بصري (Golden Test Renders) ناتجة عن تشغيل اختبار الواجهات الشامل في Flutter (`mobile/test/golden_flows_test.dart`) باستخدام خط `Noto Naskh Arabic` المدمج في المشروع، وليست لقطات مأخوذة من جهاز فعلي (Device Captures).
-> لإعادة توليد هذه اللقطات بدقة وتأكيد سلامة رسم الخط العربي وتشكيله:
-> ```bash
-> cd mobile
-> flutter test test/golden_flows_test.dart --update-goldens
-> ```
+> **ملاحظة توثيقية حول اللقطات المرفقة وتشغيل التطبيق على أجهزة أندرويد حقيقية (Live Android Device Execution)**:
+> تم التحقق من عمل تطبيق الهاتف فعلياً وتشغيله بنجاح على محاكي أندرويد حقيقي يعمل بتسريع Hyper-V / WHPX (`emulator-5554`، بنظام Android 13 API 33) متصلاً بخادم الخلفية الحي `FastAPI` عبر `adb reverse tcp:8000 tcp:8000`.
+>
+> 1. **لقطات الجهاز الفعلي (Live Device Capture)**:
+>    - تم التقاط لقطة شاشة حية من ذاكرة الإطار للجهاز (`framebuffer`) مباشرة عبر `adb exec-out screencap -p > mobile/docs/device_flow_1.png`.
+>    - تُظهر اللقطة تدفق جلسة المتعلم الحية بالخط العربي الأصيل (`Noto Naskh Arabic`) وضوابط مشغل الصوت مع خيارات السرعة المتجاوبة (0.75x، 1.0x، 1.25x، 1.5x) والأسئلة التفاعلية دون أي أخطاء أو تجاوز لحدود الشاشة (`RenderFlex overflow`).
+>
+> 2. **أمر تشغيل الاختبار التكاملي الحي على المحاكي/الجهاز**:
+>    ```bash
+>    python scripts/run_mobile_device.py
+>    # أو يدوياً:
+>    cd mobile && flutter test integration_test/app_test.dart -d emulator-5554 --dart-define=API_BASE=http://127.0.0.1:8000
+>    ```
+>
+> 3. **لقطات الفحص البصري الذهبية (Golden Test Renders)**:
+>    - الصور التوضيحية المرفقة أدناه (`flow_1.png` إلى `flow_5.png`) تمثل اللقطات الذهبية المعيارية الناتجة عن:
+>      ```bash
+>      cd mobile && flutter test test/golden_flows_test.dart --update-goldens
+>      ```
+
+![Live Device Flow 1 (Learner Session)](device_flow_1.png)
 
 يوثق هذا المستند التدفقات الخمسة المعتمدة في النظام وفقاً لمخططات التتابع الرسمية (`h_seq1` حتى `h_seq5`)، مع بيان عناصر الواجهة البرمجية (Widgets)، ونقاط النهاية (Endpoints)، وحالات الانتقال.
 
