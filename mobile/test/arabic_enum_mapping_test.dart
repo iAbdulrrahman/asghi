@@ -7,7 +7,6 @@ import 'package:mobile/core/arabic_display.dart';
 import 'package:mobile/core/theme.dart';
 import 'package:mobile/providers/providers.dart';
 import 'package:mobile/screens/admin/admin_screen.dart';
-import 'package:mobile/screens/contributor/contributor_screen.dart';
 import 'mock_adapter.dart';
 
 void main() {
@@ -65,12 +64,12 @@ void main() {
     }
 
     // Switch to Flags tab
-    await tester.tap(find.text('البلاغات'));
+    await tester.tap(find.text('البلاغات والنزاعات'));
     for (int i = 0; i < 20; i++) {
       await tester.pump(const Duration(milliseconds: 50));
     }
 
-    // Must NOT contain raw English enum PASSAGE or PENDING
+    // Must NOT contain raw English enum PASSAGE
     expect(find.textContaining('بلاغ عن PASSAGE'), findsNothing);
     expect(find.textContaining('بلاغ عن نص قرائي'), findsOneWidget);
     expect(find.text('معلق'), findsWidgets);
