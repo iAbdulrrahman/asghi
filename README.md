@@ -17,13 +17,26 @@ Install project dependencies with:
 python -m pip install fastapi uvicorn pydantic PyJWT python-multipart pytest httpx
 ```
 
-### 3. Database Seeding
+### 3. Configuration & Environment Variables
+The application reads configuration from environment variables:
+- `SECRET_KEY`: Cryptographic signing key for JWT tokens. In `ENVIRONMENT=production` mode, this variable is **required** and the application fails fast if unset. In development mode, a secure fallback is provided.
+- `ENVIRONMENT`: Set to `production` or `development` (default: `development`).
+- `ASGHI_DB_PATH`: Optional path to SQLite database (default: `asghi.db`).
+
+Example:
+```bash
+# Production mode
+export ENVIRONMENT=production
+export SECRET_KEY="your-strong-production-random-secret-key"
+```
+
+### 4. Database Seeding
 Seed the database with sample listening passages, tiered comprehension questions (Easy, Medium, Hard), and seed accounts across all four roles (Admin, Reviewers, Contributor, Learner):
 ```bash
 python -m asghi.seed
 ```
 
-### 4. Running the Application
+### 5. Running the Application
 Start the ASGI web server with Uvicorn:
 ```bash
 python -m uvicorn asghi.api:app --host 0.0.0.0 --port 8000 --reload
