@@ -122,19 +122,17 @@ class Passage(ReviewableContent):
         self.questions.append(question)
 
     def getQuestion(self, difficulty: Difficulty) -> Optional[Question]:
-        """Sequence 3 step 32-34: fetch question matching target difficulty."""
+        """Sequence 3 step 32-34: fetch question matching target difficulty.
+        Req 7.3: Returns VERIFIED questions only; tier fallback stays strictly inside VERIFIED.
+        """
         matching = [q for q in self.questions if q.difficulty == difficulty and q.status == ContentStatus.VERIFIED]
         if matching:
             return matching[0]
-        # Fallback to any verified question
+        # Fallback to any verified question on this passage
         verified = [q for q in self.questions if q.status == ContentStatus.VERIFIED]
         if verified:
             return verified[0]
-        # If no verified yet, return any matching
-        unverified_match = [q for q in self.questions if q.difficulty == difficulty]
-        if unverified_match:
-            return unverified_match[0]
-        return self.questions[0] if self.questions else None
+        return None
 
     @classmethod
     def browse(

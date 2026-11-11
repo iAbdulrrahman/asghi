@@ -39,7 +39,7 @@
 | 7 | DONE | `asghi/domain/question_author.py::QuestionAuthor`, `POST /api/questions` | `tests/test_question_authoring.py::test_question_authoring_all_roles` |
 | 7.1 | DONE | `ContributorProfile.authorQuestion`, `ReviewerProfile.authorQuestion`, `AdminProfile.authorQuestion` | `tests/test_question_authoring.py::test_author_question_roles` |
 | 7.2 | DONE | `AIEngine.generateQuestions`, `QuestionAuthor.generateQuestions` | `tests/test_question_authoring.py::test_balanced_difficulty_generation` |
-| 7.3 | DONE | `asghi/domain/enums.py::ContentStatus.PENDING_REVIEW`, `POST /api/reviewer/questions/{id}/review` | `tests/test_question_authoring.py::test_questions_reviewed_before_shown` |
+| 7.3 | DONE | `asghi/domain/passage.py::Passage.getQuestion`, `POST /api/reviewer/questions/{id}/review` | `tests/test_fix_9_verified_questions.py::test_unverified_question_never_served` |
 | 8 | DONE | `asghi/domain/reviewable_content.py::ReviewableContent.reject`, `GET /api/contributor/submissions` | `tests/test_contributor_api.py::test_rejection_explanation_visible_to_contributor` |
 | 9 | DONE | `asghi/domain/test_session.py::TestSession.submitAnswer`, `asghi/domain/question.py::Question.explanation` | `tests/test_learner_api.py::test_actionable_feedback_on_wrong_answer` |
 | 10 | DONE | `asghi/domain/admin_profile.py::AdminProfile`, `/api/admin/*` | `tests/test_admin_api.py::test_admin_governance_and_moderation` |
