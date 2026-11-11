@@ -699,10 +699,6 @@ class Repository:
         return u
 
     def get_user_by_id(self, user_id: UUID) -> Optional[User]:
-        for u in User._registry:
-            if u.userId == user_id:
-                self.save_user(u)
-                return u
         with self._get_conn() as conn:
             ur = conn.execute("SELECT * FROM users WHERE user_id = ?;", (str(user_id),)).fetchone()
             if not ur:
@@ -711,9 +707,6 @@ class Repository:
 
     def get_user_by_identifier(self, identifier: str) -> Optional[User]:
         ident = identifier.strip()
-        for u in User._registry:
-            if (u.email and u.email.lower() == ident.lower()) or (u.phoneNo and u.phoneNo == ident):
-                return u
         with self._get_conn() as conn:
             ur = conn.execute(
                 "SELECT * FROM users WHERE LOWER(email) = LOWER(?) OR phone_no = ?;",
