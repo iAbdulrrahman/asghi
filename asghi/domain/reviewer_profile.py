@@ -146,7 +146,9 @@ class ReviewerProfile(UserRoleProfile, QuestionAuthor):
         if content.meetsThreshold():
             content.verify()
             if parent_passage:
-                parent_passage.releaseClaim()
+                parent_passage.changeStatus(ContentStatus.VERIFIED)
+                parent_passage.claimedBy = None
+                parent_passage.claimedAt = None
         else:
             # Check for reviewer disagreement
             verdicts = [r.isApproved for r in content.reviews if r.isApproved is not None]
@@ -158,6 +160,8 @@ class ReviewerProfile(UserRoleProfile, QuestionAuthor):
             elif not effective_approval and (assignment.isSpecialistReview or len([v for v in verdicts if v is False]) >= 2):
                 content.reject(reason)
                 if parent_passage:
+                    parent_passage.changeStatus(ContentStatus.DRAFT)
+                    parent_passage.rejectionReason = reason
                     parent_passage.releaseClaim()
 
         # Update reviewer reputation
