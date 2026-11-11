@@ -366,12 +366,15 @@ class _ContributorScreenState extends ConsumerState<ContributorScreen> with Sing
     return Scaffold(
       appBar: AppBar(
         title: const Text('منطقة المساهمين'),
-        bottom: TabBar(
-          controller: _tabController,
-          tabs: const [
-            Tab(text: 'نصوص للتسجيل', icon: Icon(Icons.mic)),
-            Tab(text: 'تسجيلاتي وحالتها', icon: Icon(Icons.list_alt)),
-          ],
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(48),
+          child: TabBar(
+            controller: _tabController,
+            tabs: const [
+              Tab(text: 'نصوص للتسجيل', icon: Icon(Icons.mic)),
+              Tab(text: 'تسجيلاتي وحالتها', icon: Icon(Icons.list_alt)),
+            ],
+          ),
         ),
         actions: [
           IconButton(

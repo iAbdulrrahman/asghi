@@ -159,12 +159,15 @@ class _ReviewerScreenState extends ConsumerState<ReviewerScreen> with SingleTick
     return Scaffold(
       appBar: AppBar(
         title: const Text('قائمة تدقيق الجودة والمراجعة'),
-        bottom: TabBar(
-          controller: _tabController,
-          tabs: const [
-            Tab(text: 'تدقيق التسجيلات', icon: Icon(Icons.record_voice_over)),
-            Tab(text: 'تدقيق الأسئلة', icon: Icon(Icons.quiz)),
-          ],
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(48),
+          child: TabBar(
+            controller: _tabController,
+            tabs: const [
+              Tab(text: 'تدقيق التسجيلات', icon: Icon(Icons.record_voice_over)),
+              Tab(text: 'تدقيق الأسئلة', icon: Icon(Icons.quiz)),
+            ],
+          ),
         ),
         actions: [
           IconButton(icon: const Icon(Icons.refresh), onPressed: _loadQueues),
