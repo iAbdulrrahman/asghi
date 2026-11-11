@@ -46,5 +46,18 @@ void main() {
       await posSub.cancel();
       player.dispose();
     });
+
+    test('AudioPlaybackService stream emissions notify listeners accurately', () async {
+      final player = SimulatedAudioPlaybackService(duration: const Duration(seconds: 180));
+      bool notified = false;
+      final sub = player.speedStream.listen((s) {
+        if (s == 1.5) notified = true;
+      });
+      await player.setSpeed(1.5);
+      expect(notified, isTrue);
+      await sub.cancel();
+      player.dispose();
+    });
   });
 }
+
