@@ -149,7 +149,7 @@ def get_logcat_dump(device: str) -> str:
 
 def api_get(endpoint: str, base_url: str, token: Optional[str] = None) -> Any:
     url = f"{base_url.rstrip('/')}{endpoint}"
-    req = urllib.request.Request(url)
+    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AsghiClient/1.0"})
     if token:
         req.add_header("Authorization", f"Bearer {token}")
     with urllib.request.urlopen(req, timeout=5) as res:
@@ -159,7 +159,7 @@ def api_get(endpoint: str, base_url: str, token: Optional[str] = None) -> Any:
 def api_post(endpoint: str, base_url: str, data: Dict[str, Any], token: Optional[str] = None) -> Any:
     url = f"{base_url.rstrip('/')}{endpoint}"
     body = json.dumps(data).encode("utf-8")
-    req = urllib.request.Request(url, data=body, headers={"Content-Type": "application/json"})
+    req = urllib.request.Request(url, data=body, headers={"Content-Type": "application/json", "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AsghiClient/1.0"})
     if token:
         req.add_header("Authorization", f"Bearer {token}")
     with urllib.request.urlopen(req, timeout=5) as res:

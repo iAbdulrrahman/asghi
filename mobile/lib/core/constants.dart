@@ -5,10 +5,7 @@ class AppConstants {
   static const String appNameArabic = 'اصغِ';
   static const String appSubtitle = 'منصة التدريب على الاستماع العربي الفصيح';
 
-  static String? _customBaseUrl;
-
-  static String? get customBaseUrl => _customBaseUrl;
-  static set customBaseUrl(String? val) => _customBaseUrl = val;
+  static String? customBaseUrl;
 
   // Compile-time default
   static String get defaultApiBaseUrl {
@@ -22,7 +19,7 @@ class AppConstants {
   }
 
   // Live configurable value
-  static String get apiBaseUrl => _customBaseUrl ?? defaultApiBaseUrl;
+  static String get apiBaseUrl => customBaseUrl ?? defaultApiBaseUrl;
 
   /// Normalizes missing scheme, trims trailing slashes, and validates syntax.
   static String? normalizeAndValidateServerUrl(String input) {

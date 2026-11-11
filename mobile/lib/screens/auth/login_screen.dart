@@ -71,7 +71,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             onPressed: () async {
               await ApiClient().setBaseUrl(null);
               if (mounted) {
-                Navigator.of(ctx).pop();
+                Navigator.of(context).pop();
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('تمت استعادة عنوان الخادم الافتراضي')),
                 );
@@ -94,10 +94,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 return;
               }
               if (mounted) {
-                Navigator.of(ctx).pop();
+                Navigator.of(context).pop();
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text('تم ضبط عنوان الخادم إلى: ' + AppConstants.apiBaseUrl),
+                    content: Text('تم ضبط عنوان الخادم إلى: ${AppConstants.apiBaseUrl}'),
                     backgroundColor: AppConstants.successGreen,
                   ),
                 );
