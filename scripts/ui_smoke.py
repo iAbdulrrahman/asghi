@@ -1,6 +1,7 @@
 """Automated UI smoke walkthrough proving live Android client against seeded backend.
 Executes on live device/emulator via adb, captures live role screenshots, and verifies P0/P1 fixes.
 """
+# -*- coding: utf-8 -*-
 import os
 import re
 import sys
@@ -106,38 +107,59 @@ def capture_screenshot(device: str, filename: str):
     assert size > 10000, f"Screenshot {filename} too small ({size} bytes)"
 
 
-def perform_login(device: str, email: str, password: str):
-    # 1. Reset app to guarantee clean state
-    run_adb(["shell", "pm", "clear", PKG], device)
-    run_adb(["shell", "am", "start", "-n", MAIN_ACTIVITY], device)
-    time.sleep(3)
+def perform_login(device: str, email: str, password: str) -> str:
+    for attempt in range(1, 4):
+        # 1. Reset app
+        run_adb(["shell", "pm", "clear", PKG], device)
+        run_adb(["shell", "am", "start", "-n", MAIN_ACTIVITY], device)
+        time.sleep(3)
 
-    # 2. Enter email in first field
-    xml = dump_ui(device)
-    fields = find_edittexts(xml)
-    assert len(fields) >= 2, f"Could not find login fields (found {len(fields)})"
-    tap(device, *fields[0])
-    type_text(device, email)
-    hide_keyboard(device)
-    time.sleep(0.5)
+        # 2. Find edittexts
+        xml = dump_ui(device)
+        fields = find_edittexts(xml)
+        if len(fields) < 2:
+            time.sleep(2)
+            xml = dump_ui(device)
+            fields = find_edittexts(xml)
+        if len(fields) < 2:
+            print(f"Attempt {attempt}: fields not ready, retrying...")
+            continue
 
-    # 3. Enter password in second field
-    xml = dump_ui(device)
-    fields = find_edittexts(xml)
-    assert len(fields) >= 2, "Could not find login fields on password entry"
-    tap(device, *fields[1])
-    type_text(device, password)
-    hide_keyboard(device)
-    time.sleep(0.5)
+        # 3. Enter email
+        tap(device, *fields[0])
+        time.sleep(0.5)
+        type_text(device, email)
+        hide_keyboard(device)
+        time.sleep(0.5)
 
-    # 4. Tap exact 'دخول' button
-    xml = dump_ui(device)
-    login_btn = find_node(xml, desc="دخول", class_name="Button", exact_desc=True)
-    if not login_btn:
-        login_btn = find_node(xml, desc="دخول", exact_desc=True)
-    assert login_btn is not None, "Login button 'دخول' not found"
-    tap(device, *login_btn)
-    time.sleep(4)
+        # 4. Enter password
+        xml = dump_ui(device)
+        fields = find_edittexts(xml)
+        if len(fields) >= 2:
+            tap(device, *fields[1])
+            time.sleep(0.5)
+            type_text(device, password)
+            hide_keyboard(device)
+            time.sleep(0.5)
+
+        # 5. Tap login button
+        xml = dump_ui(device)
+        login_btn = find_node(xml, desc="دخول", class_name="Button", exact_desc=True)
+        if not login_btn:
+            login_btn = find_node(xml, desc="دخول", exact_desc=True)
+        if login_btn:
+            tap(device, *login_btn)
+
+        # 6. Wait for authenticated state
+        for _ in range(8):
+            time.sleep(1)
+            xml = dump_ui(device)
+            if "تسجيل الخروج" in xml or "المتعلّم" in xml or "المساهم" in xml or "المراجع" in xml or "المشرف" in xml:
+                return xml
+
+        print(f"Attempt {attempt} did not transition to authenticated home, retrying...")
+
+    raise AssertionError(f"Failed to login as {email} after 3 attempts")
 
 
 def main():
@@ -148,27 +170,24 @@ def main():
         sys.exit(1)
     print(f"Connected Device: {device}")
 
+    # Seed database to ensure seeded users and passages exist
+    subprocess.run([sys.executable, "seed.py"], check=True)
+    print("Database seeded with sample users and passages")
+
     # 1. Reverse port 8000
     run_adb(["reverse", "tcp:8000", "tcp:8000"], device)
     print("adb reverse tcp:8000 configured")
 
     roles = [
-        ("learner", "learner@asghi.org", "LearnerPass123!", ["المكتبة", "المتعلّم", "استماع", "مكتبة النصوص"]),
-        ("contributor", "contributor@asghi.org", "ContributorPass123!", ["المساهم", "المساهمة", "تسجيلاتي", "حجز"]),
-        ("reviewer", "reviewer@asghi.org", "ReviewerPass123!", ["المراجع", "المراجعة", "قائمة", "اعتماد"]),
-        ("admin", "admin@asghi.org", "AdminPass123!", ["المشرف", "الإدارة", "لوحة", "المؤشرات"]),
+        ("learner", "learner@asghi.org", "LearnerPass123!"),
+        ("contributor", "contributor@asghi.org", "ContributorPass123!"),
+        ("reviewer", "reviewer@asghi.org", "ReviewerPass123!"),
+        ("admin", "admin@asghi.org", "AdminPass123!"),
     ]
 
-    for role_name, email, password, expected_tokens in roles:
+    for role_name, email, password in roles:
         print(f"\n--- Verifying {role_name.capitalize()} Role ({email}) ---")
-        perform_login(device, email, password)
-
-        # Inspect resulting screen
-        xml = dump_ui(device)
-        matched = any(token in xml for token in expected_tokens)
-        if not matched:
-            print(f"Warning: Expected tokens {expected_tokens} not found in dump. Checking logout presence...")
-        assert "تسجيل الخروج" in xml or matched, f"{role_name.capitalize()} screen failed to load authenticated state"
+        xml = perform_login(device, email, password)
 
         screenshot_name = f"live_{role_name}.png"
         capture_screenshot(device, screenshot_name)

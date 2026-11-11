@@ -44,7 +44,7 @@ test-backend: setup
 test-mobile:
 	cd mobile && $(FLUTTER) analyze && $(FLUTTER) test
 
-device-check: setup
+device-check: seed
 	$(VENV_PY) scripts/ui_smoke.py
 
 check: setup
