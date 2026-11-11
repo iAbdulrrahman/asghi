@@ -121,6 +121,7 @@ class _ContributorScreenState extends ConsumerState<ContributorScreen> with Sing
     int elapsed = 0;
     String attribution = 'SHOW_NAME';
     String? validationError;
+    bool showTashkeel = true;
 
     await showModalBottomSheet(
       context: context,
@@ -142,13 +143,22 @@ class _ContributorScreenState extends ConsumerState<ContributorScreen> with Sing
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text('تسجيل نص: ${p.topic}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-                    IconButton(
-                      icon: const Icon(Icons.close),
-                      onPressed: () {
-                        timer?.cancel();
-                        if (isRecording) recorder.cancelRecording();
-                        Navigator.pop(ctx);
-                      },
+                    Row(
+                      children: [
+                        IconButton(
+                          icon: Icon(showTashkeel ? Icons.font_download : Icons.font_download_off),
+                          tooltip: showTashkeel ? 'إخفاء التشكيل' : 'إظهار التشكيل',
+                          onPressed: () => setModalState(() => showTashkeel = !showTashkeel),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.close),
+                          onPressed: () {
+                            timer?.cancel();
+                            if (isRecording) recorder.cancelRecording();
+                            Navigator.pop(ctx);
+                          },
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -157,7 +167,7 @@ class _ContributorScreenState extends ConsumerState<ContributorScreen> with Sing
                   color: AppConstants.backgroundLight,
                   child: Padding(
                     padding: const EdgeInsets.all(12),
-                    child: TashkeelTextWidget(text: p.text, style: const TextStyle(fontSize: 16)),
+                    child: TashkeelTextWidget(text: p.text, showTashkeel: showTashkeel, style: const TextStyle(fontSize: 16)),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -415,36 +425,89 @@ class _ContributorScreenState extends ConsumerState<ContributorScreen> with Sing
             ],
           ),
           // Tab 2: Submissions & Rejection Reasons (Req 8)
-          _mySubmissions.isEmpty
-              ? const Center(child: Text('لا توجد تسجيلات سابقة لك'))
-              : ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: _mySubmissions.length,
-                  itemBuilder: (ctx, i) {
-                    final sub = _mySubmissions[i];
-                    final status = sub['status'] ?? 'PENDING';
-                    final rejectionReason = sub['rejectionReason'] ?? sub['feedback'];
-                    final isRejected = status == 'REJECTED';
-                    return Card(
-                      margin: const EdgeInsets.only(bottom: 12),
-                      child: ListTile(
-                        leading: Icon(
-                          isRejected ? Icons.cancel : Icons.check_circle,
-                          color: isRejected ? AppConstants.errorRed : AppConstants.successGreen,
+          RefreshIndicator(
+            onRefresh: () async => _loadSubmissions(),
+            child: _mySubmissions.isEmpty
+                ? const Center(child: Text('لا توجد تسجيلات سابقة لك'))
+                : ListView.builder(
+                    padding: const EdgeInsets.all(16),
+                    itemCount: _mySubmissions.length,
+                    itemBuilder: (ctx, i) {
+                      final sub = _mySubmissions[i];
+                      final status = sub['status'] ?? 'PENDING';
+                      final rejectionReason = sub['rejectionReason'] ?? sub['feedback'];
+                      final isRejected = status == 'REJECTED';
+                      final isVerified = status == 'VERIFIED';
+
+                      IconData iconData = Icons.hourglass_top;
+                      Color iconColor = Colors.orange;
+                      String statusLabel = 'قيد المراجعة والتدقيق';
+
+                      if (isVerified) {
+                        iconData = Icons.check_circle;
+                        iconColor = AppConstants.successGreen;
+                        statusLabel = 'معتمد ومنشور';
+                      } else if (isRejected) {
+                        iconData = Icons.cancel;
+                        iconColor = AppConstants.errorRed;
+                        statusLabel = 'مرفوض';
+                      }
+
+                      return Card(
+                        margin: const EdgeInsets.only(bottom: 12),
+                        child: Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(iconData, color: iconColor),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      'تسجيل لنص: ${sub['passageTopic'] ?? sub['topic'] ?? 'عام'}',
+                                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                                    ),
+                                  ),
+                                  Chip(
+                                    label: Text(statusLabel, style: TextStyle(color: iconColor, fontWeight: FontWeight.bold, fontSize: 12)),
+                                    backgroundColor: iconColor.withValues(alpha: 0.1),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Text('الحالة: $status', style: const TextStyle(color: Colors.grey)),
+                              if (isRejected && rejectionReason != null) ...[
+                                const SizedBox(height: 8),
+                                Container(
+                                  padding: const EdgeInsets.all(10),
+                                  decoration: BoxDecoration(
+                                    color: AppConstants.errorRed.withValues(alpha: 0.08),
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(color: AppConstants.errorRed.withValues(alpha: 0.3)),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      const Icon(Icons.info_outline, color: AppConstants.errorRed, size: 20),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Text(
+                                          'سبب الرفض: $rejectionReason',
+                                          style: const TextStyle(color: AppConstants.errorRed, fontWeight: FontWeight.w600),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
                         ),
-                        title: Text('تسجيل لنص: ${sub['passageTopic'] ?? sub['topic'] ?? 'عام'}'),
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('الحالة: $status'),
-                            if (isRejected && rejectionReason != null)
-                              Text('سبب الرفض: $rejectionReason', style: const TextStyle(color: AppConstants.errorRed)),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                ),
+                      );
+                    },
+                  ),
+          ),
         ],
       ),
     );
