@@ -22,11 +22,14 @@ class _AudioPlayerWidgetState extends ConsumerState<AudioPlayerWidget> {
   StreamSubscription? _posSub;
   StreamSubscription? _playSub;
   StreamSubscription? _speedSub;
+  StreamSubscription? _errSub;
 
   Duration _position = Duration.zero;
   Duration _duration = const Duration(seconds: 60);
   bool _isPlaying = false;
   double _currentSpeed = 1.0;
+  bool _hasError = false;
+  String? _errorMessage;
 
   @override
   void initState() {
@@ -38,7 +41,28 @@ class _AudioPlayerWidgetState extends ConsumerState<AudioPlayerWidget> {
 
   void _initPlayer() async {
     final player = ref.read(audioPlaybackProvider);
-    await player.load(widget.audioUrl);
+    final url = widget.audioUrl.trim();
+    if (url.isEmpty) {
+      if (mounted) {
+        setState(() {
+          _hasError = true;
+          _errorMessage = 'لا يوجد ملف صوتي معتمد لهذا النص';
+        });
+      }
+      return;
+    }
+
+    try {
+      await player.load(url);
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _hasError = true;
+          _errorMessage = 'تعذر تحميل الملف الصوتي';
+        });
+      }
+    }
+
     _posSub = player.positionStream.listen((pos) {
       if (mounted) setState(() => _position = pos);
     });
@@ -51,6 +75,14 @@ class _AudioPlayerWidgetState extends ConsumerState<AudioPlayerWidget> {
     _speedSub = player.speedStream.listen((speed) {
       if (mounted) setState(() => _currentSpeed = speed);
     });
+    _errSub = player.errorStream.listen((err) {
+      if (mounted && err != null) {
+        setState(() {
+          _hasError = true;
+          _errorMessage = 'تعذر تحميل الملف الصوتي';
+        });
+      }
+    });
   }
 
   @override
@@ -58,6 +90,7 @@ class _AudioPlayerWidgetState extends ConsumerState<AudioPlayerWidget> {
     _posSub?.cancel();
     _playSub?.cancel();
     _speedSub?.cancel();
+    _errSub?.cancel();
     super.dispose();
   }
 
@@ -93,14 +126,37 @@ class _AudioPlayerWidgetState extends ConsumerState<AudioPlayerWidget> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
+            if (_hasError) ...[
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                margin: const EdgeInsets.only(bottom: 8),
+                decoration: BoxDecoration(
+                  color: Colors.red.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.error_outline, color: AppConstants.errorRed, size: 20),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        _errorMessage ?? 'تعذر تحميل الملف الصوتي',
+                        style: const TextStyle(color: AppConstants.errorRed, fontSize: 13),
+                        textDirection: TextDirection.rtl,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
             Row(
               children: [
                 IconButton(
                   key: const Key('playPauseButton'),
                   iconSize: 42,
-                  color: AppConstants.primaryEmerald,
+                  color: _hasError ? Colors.grey : AppConstants.primaryEmerald,
                   icon: Icon(_isPlaying ? Icons.pause_circle_filled : Icons.play_circle_filled),
-                  onPressed: _togglePlay,
+                  onPressed: _hasError ? null : _togglePlay,
                 ),
                 Expanded(
                   child: Slider(
