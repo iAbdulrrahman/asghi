@@ -354,10 +354,11 @@ def browse_passages(
     level: Optional[Level] = None,
     topic: Optional[str] = None,
     maxDurationSeconds: Optional[float] = None,
+    include_all: bool = False,
 ):
     """Req 2.1, 2.3 & 6.1: Catalogue query contract with multi-criteria filtering."""
     max_dur = timedelta(seconds=maxDurationSeconds) if maxDurationSeconds else None
-    passages = Passage.browse(level=level, topic=topic, maxDuration=max_dur)
+    passages = Passage.browse(level=level, topic=topic, maxDuration=max_dur, include_all=include_all)
 
     items = []
     for p in passages:

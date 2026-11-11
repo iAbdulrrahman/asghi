@@ -140,10 +140,22 @@ class Passage(ReviewableContent):
         level: Optional[Level] = None,
         topic: Optional[str] = None,
         maxDuration: Optional[timedelta] = None,
+        include_all: bool = False,
     ) -> List[Passage]:
-        """Static query method to browse passages."""
+        """Static query method to browse passages.
+        By default (learner catalogue), returns only VERIFIED passages with at least one VERIFIED audio recording.
+        If include_all=True, status filtering is bypassed.
+        """
         results = []
         for p in cls._registry:
+            if not include_all:
+                if p.status != ContentStatus.VERIFIED:
+                    continue
+                has_verified_audio = any(
+                    r.status == ContentStatus.VERIFIED for r in getattr(p, "audioRecordings", [])
+                )
+                if not has_verified_audio:
+                    continue
             if level and p.level != level:
                 continue
             if topic and topic.strip() and topic.lower() not in p.topic.lower():

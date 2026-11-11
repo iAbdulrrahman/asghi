@@ -44,7 +44,7 @@ def test_catalogue_maintenance():
     p_id = res.json()["passageId"]
 
     # 2. Browse catalogue
-    browse_res = client.get("/api/passages?level=B1&topic=التعليم")
+    browse_res = client.get("/api/passages?level=B1&topic=التعليم&include_all=true")
     assert browse_res.status_code == 200
     passages = browse_res.json()
     assert len(passages) >= 1
