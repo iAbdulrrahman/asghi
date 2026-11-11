@@ -245,11 +245,11 @@ class _AdminScreenState extends ConsumerState<AdminScreen> with SingleTickerProv
   }
 
   Widget _buildDashboardMetrics() {
-    final report = _dashboardData?['report'] ?? _dashboardData ?? {};
-    final totalUsers = _dashboardData?['totalUsers'] ?? report['totalUsers'] ?? (_dashboardData?['users'] as List?)?.length ?? 0;
-    final totalPassages = _dashboardData?['totalPassages'] ?? report['totalPassages'] ?? 0;
-    final verifiedRecordings = _dashboardData?['verifiedRecordings'] ?? report['verifiedRecordings'] ?? 0;
-    final pendingFlags = _dashboardData?['pendingFlags'] ?? _flaggedItems.length;
+    final report = _dashboardData?['report'] is Map ? (_dashboardData!['report'] as Map) : (_dashboardData ?? {});
+    final totalUsers = report['totalUsers'] ?? _dashboardData?['totalUsers'] ?? (_dashboardData?['users'] as List?)?.length ?? 0;
+    final totalPassages = report['totalPassages'] ?? _dashboardData?['totalPassages'] ?? 0;
+    final verifiedRecordings = report['verifiedPassages'] ?? report['verifiedRecordings'] ?? _dashboardData?['verifiedRecordings'] ?? 0;
+    final pendingFlags = report['totalFlags'] ?? report['pendingFlags'] ?? _dashboardData?['pendingFlags'] ?? _flaggedItems.length;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
