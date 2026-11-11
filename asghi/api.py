@@ -116,8 +116,14 @@ async def add_security_headers(request, call_next):
 
 # --- Pydantic Schemas ---
 class RegisterRequest(BaseModel):
-    emailOrPhone: str
+    emailOrPhone: Optional[str] = None
+    email: Optional[str] = None
+    phone: Optional[str] = None
     password: str
+
+    @property
+    def identifier(self) -> str:
+        return self.emailOrPhone or self.email or self.phone or ""
 
 
 class LoginRequest(BaseModel):
@@ -227,12 +233,15 @@ def healthz():
 @app.post("/api/auth/register", status_code=status.HTTP_201_CREATED)
 def register(req: RegisterRequest, repo: Repository = Depends(get_repository)):
     """Req 1.2 & Seq 4: Register new user with email or phone number."""
-    existing = repo.get_user_by_identifier(req.emailOrPhone)
+    ident = req.identifier
+    if not ident:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="emailOrPhone is required")
+    existing = repo.get_user_by_identifier(ident)
     if existing:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="الحساب مسجل بالفعل")
 
     user = User()
-    user.register(req.emailOrPhone, req.password)
+    user.register(ident, req.password)
     repo.save_user(user)
     token = create_access_token(user.userId, [p.role for p in user.userProfiles])
     return {
@@ -414,7 +423,7 @@ def get_awaiting_recording():
     "/api/contributor/claim",
     dependencies=[Depends(require_roles(UserRole.CONTRIBUTOR, UserRole.ADMIN))],
 )
-def claim_passage(req: ClaimRequest, user: User = Depends(get_current_user)):
+def claim_passage(req: ClaimRequest, user: User = Depends(get_current_user), repo: Repository = Depends(get_repository)):
     """Req 4.1 & Seq 1: Claim passage for audio recording."""
     contributor_prof: Optional[ContributorProfile] = None
     for p in user.userProfiles:
@@ -425,7 +434,6 @@ def claim_passage(req: ClaimRequest, user: User = Depends(get_current_user)):
     if not contributor_prof:
         raise HTTPException(status_code=403, detail="الحساب ليس لديه ملف مساهم")
 
-    repo = get_repository()
     # P1 Item 5: single conditional UPDATE in an immediate transaction; 409 when row not won
     tx_won = repo.claim_passage_tx(req.passageId, contributor_prof.userRoleProfileId)
     if not tx_won:
@@ -447,6 +455,7 @@ async def submit_audio(
     durationSeconds: float = Form(90.0),
     file: UploadFile = File(...),
     user: User = Depends(get_current_user),
+    repo: Repository = Depends(get_repository),
 ):
     """Req 4.2, 4.4, NFR 12, NFR 19 & Seq 1: Submit audio recording up to 25MB."""
     contributor_prof: Optional[ContributorProfile] = None
@@ -650,6 +659,7 @@ def review_question(
     questionId: UUID,
     req: QuestionReviewRequest,
     user: User = Depends(get_current_user),
+    repo: Repository = Depends(get_repository),
 ):
     """Req 3.3, 7.3: Reviewer verifies or rejects question."""
     target_q: Optional[Question] = None
@@ -719,7 +729,7 @@ def play_learner_audio(req: PlayAudioRequest, user: User = Depends(get_current_u
     "/api/learner/sessions",
     dependencies=[Depends(require_roles(UserRole.LEARNER, UserRole.ADMIN))],
 )
-def start_learner_session(req: StartSessionRequest, user: User = Depends(get_current_user)):
+def start_learner_session(req: StartSessionRequest, user: User = Depends(get_current_user), repo: Repository = Depends(get_repository)):
     """Req 6.2 & Seq 3: Start new test session for a passage."""
     learner_prof = next((p for p in user.userProfiles if isinstance(p, LearnerProfile)), None)
     if not learner_prof:
@@ -734,7 +744,6 @@ def start_learner_session(req: StartSessionRequest, user: User = Depends(get_cur
     if not target_p:
         raise HTTPException(status_code=404, detail="النص غير موجود")
 
-    repo = get_repository()
     repo.save_passage(target_p)
     session = learner_prof.startSession(req.passageId)
     session.learnerId = user.userId
@@ -781,6 +790,7 @@ def get_next_question(sessionId: UUID):
 def submit_session_answer(
     sessionId: UUID,
     req: SubmitAnswerRequest,
+    repo: Repository = Depends(get_repository),
 ):
     """Req 6.4, 6.5, 9 & Seq 3: Submit answer, evaluate, adapt difficulty, return explanation."""
     session = active_sessions.get(sessionId)
@@ -788,7 +798,6 @@ def submit_session_answer(
         raise HTTPException(status_code=404, detail="الجلسة غير موجودة")
 
     result = session.submitAnswer(req.questionId, req.answer)
-    repo = get_repository()
     if session.questionResponses:
         repo.record_answer_tx(session, session.questionResponses[-1])
 
@@ -805,7 +814,7 @@ def submit_session_answer(
     "/api/learner/sessions/{sessionId}/finish",
     dependencies=[Depends(require_roles(UserRole.LEARNER, UserRole.ADMIN))],
 )
-def finish_learner_session(sessionId: UUID, user: User = Depends(get_current_user)):
+def finish_learner_session(sessionId: UUID, user: User = Depends(get_current_user), repo: Repository = Depends(get_repository)):
     """Req 6.6 & Seq 3: Finish practice session and update learner progress."""
     learner_prof = next((p for p in user.userProfiles if isinstance(p, LearnerProfile)), None)
     if not learner_prof:
@@ -818,7 +827,6 @@ def finish_learner_session(sessionId: UUID, user: User = Depends(get_current_use
     totals = session.finishSession()
     learner_prof.progress.update(totals["totalScore"], totals["timeSpent"])
     del active_sessions[sessionId]
-    repo = get_repository()
     repo.save_test_session(session)
     repo.save_user(user)
 
@@ -1013,7 +1021,7 @@ def trigger_ai_generation(req: TriggerAIRequest, user: User = Depends(get_curren
     "/api/admin/flags/{flagId}/resolve",
     dependencies=[Depends(require_roles(UserRole.ADMIN))],
 )
-def resolve_flag(flagId: UUID, req: ResolveFlagRequest, user: User = Depends(get_current_user)):
+def resolve_flag(flagId: UUID, req: ResolveFlagRequest, user: User = Depends(get_current_user), repo: Repository = Depends(get_repository)):
     """Req 6.7, 10.2 & Seq 5: Admin resolves content flag."""
     admin_prof = next((p for p in user.userProfiles if isinstance(p, AdminProfile)), None)
     if not admin_prof:
