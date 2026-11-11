@@ -59,13 +59,33 @@ All 65 automated tests verify all 41 Functional Requirements, 5 Authoritative Se
 
 ---
 
-## 📱 Mobile Client (Flutter)
+## 📱 Mobile Client (Flutter) & Device Verification
 - **Platforms**: Android + iOS (mobile/)
 - **Package / Org**: org.asghi.mobile
 - **Architecture**: Flutter 3.47 / Dart 3.13, Material 3, Riverpod state management, Dio HTTP networking, Secure Storage, Just Audio.
 - **RTL & Localization**: Arabic native (Locale('ar')), right-to-left layout direction.
 - **iOS Target Build Status**: BLOCKED-BY-PLATFORM: macOS required to build iOS target (iOS project scaffold generated and committed in mobile/ios/).
-- **Android Target**: Built with Gradle via lutter build apk --debug.
+- **Android Target**: Built with Gradle via lutter build apk --release.
+
+### 🤖 Running on Android Emulator & Device Check
+To execute the live UI smoke test against the live Android emulator:
+1. Start an Android emulator (API 33 recommended) **without** -no-audio so that audio services and playback engines initialize properly:
+   `ash
+   # Start Android emulator (do NOT use -no-audio flag)
+   emulator -avd <avd_name> -no-snapshot-load
+   # e.g.: %LOCALAPPDATA%\Android\Sdk\emulator\emulator.exe -avd Pixel_3a_API_33_x86_64 -no-snapshot-load
+   `
+   > ⚠️ **Important**: The emulator must **NOT** be launched with the -no-audio flag, as audio playback (Just Audio / OpenSL ES) and recording hardware services must be active for audio verification flows.
+
+2. Run the automated device smoke test walkthrough:
+   `ash
+   make device-check
+   `
+   This script (scripts/ui_smoke.py):
+   - Configures reverse port forwarding (db reverse tcp:8000 tcp:8000).
+   - Seeds sample test data (seed.py).
+   - Logs into all 4 roles on the device (Learner, Contributor, Reviewer, Admin).
+   - Verifies key UI interactions and saves live screenshots to mobile/docs/live_{learner,contributor,reviewer,admin}.png.
 
 ## 👥 Seed Accounts for Testing
 
