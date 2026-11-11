@@ -456,7 +456,7 @@ class _AdminScreenState extends ConsumerState<AdminScreen> with SingleTickerProv
                 Expanded(
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(backgroundColor: AppConstants.primaryEmerald),
-                    onPressed: () => _resolveFlag(flagId, 'RESOLVED_NO_ACTION'),
+                    onPressed: () => _resolveFlag(flagId, 'NO_ACTION'),
                     child: const Text('إبقاء المحتوى'),
                   ),
                 ),
@@ -464,7 +464,7 @@ class _AdminScreenState extends ConsumerState<AdminScreen> with SingleTickerProv
                 Expanded(
                   child: OutlinedButton(
                     style: OutlinedButton.styleFrom(foregroundColor: AppConstants.errorRed),
-                    onPressed: () => _resolveFlag(flagId, 'RESOLVED_CONTENT_REMOVED'),
+                    onPressed: () => _resolveFlag(flagId, 'ACTION_TAKEN'),
                     child: const Text('إزالة المحتوى'),
                   ),
                 ),
