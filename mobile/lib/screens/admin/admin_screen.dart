@@ -390,7 +390,7 @@ class _AdminScreenState extends ConsumerState<AdminScreen> with SingleTickerProv
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text('فض النزاعات وتدقيق الخلافات (Req 5.4)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            const Text('فض النزاعات وتدقيق الخلافات', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
             const SizedBox(height: 8),
             const Text(
               'في حال تعارض قرارات المراجعين، يتولى المشرف الفصل النهائي في المحتوى.',
@@ -493,7 +493,7 @@ class _AdminScreenState extends ConsumerState<AdminScreen> with SingleTickerProv
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const Text(
-              'توليد محتوى جديد بالذكاء الاصطناعي (Req 3.1, 3.2)',
+              'توليد محتوى جديد بالذكاء الاصطناعي',
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
             const SizedBox(height: 8),
