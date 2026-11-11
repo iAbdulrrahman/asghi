@@ -371,6 +371,10 @@ class _ContributorScreenState extends ConsumerState<ContributorScreen> with Sing
           preferredSize: const Size.fromHeight(48),
           child: TabBar(
             controller: _tabController,
+            labelColor: Colors.white,
+            unselectedLabelColor: Colors.white70,
+            indicatorColor: AppConstants.accentGold,
+            indicatorWeight: 3,
             tabs: const [
               Tab(text: 'نصوص للتسجيل', icon: Icon(Icons.mic)),
               Tab(text: 'تسجيلاتي وحالتها', icon: Icon(Icons.list_alt)),

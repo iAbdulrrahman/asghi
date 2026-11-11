@@ -9,6 +9,17 @@ class ApiClient {
 
   static const String serverAddressStorageKey = 'custom_api_base_url';
 
+  static dynamic parseData(dynamic data) {
+    if (data is String) {
+      try {
+        return jsonDecode(data);
+      } catch (_) {
+        return data;
+      }
+    }
+    return data;
+  }
+
   late final Dio dio;
   final FlutterSecureStorage storage = const FlutterSecureStorage();
   String? inMemoryToken;

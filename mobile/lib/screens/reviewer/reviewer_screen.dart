@@ -164,6 +164,10 @@ class _ReviewerScreenState extends ConsumerState<ReviewerScreen> with SingleTick
           preferredSize: const Size.fromHeight(48),
           child: TabBar(
             controller: _tabController,
+            labelColor: Colors.white,
+            unselectedLabelColor: Colors.white70,
+            indicatorColor: AppConstants.accentGold,
+            indicatorWeight: 3,
             tabs: const [
               Tab(text: 'تدقيق التسجيلات', icon: Icon(Icons.record_voice_over)),
               Tab(text: 'تدقيق الأسئلة', icon: Icon(Icons.quiz)),
