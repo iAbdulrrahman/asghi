@@ -88,10 +88,9 @@ class Passage(ReviewableContent):
         """Release contributor claim on passage."""
         self.claimedBy = None
         self.claimedAt = None
-        # If still in claimed status, revert to draft or verified
+        # Sequence 1: CLAIMED to DRAFT only
         if self.status == ContentStatus.CLAIMED:
-            has_verified = any(r.status == ContentStatus.VERIFIED for r in self.audioRecordings)
-            self.changeStatus(ContentStatus.VERIFIED if has_verified else ContentStatus.DRAFT)
+            self.changeStatus(ContentStatus.DRAFT)
 
     def addAudio(
         self,
