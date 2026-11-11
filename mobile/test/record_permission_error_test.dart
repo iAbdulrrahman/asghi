@@ -58,7 +58,7 @@ void main() {
             GlobalCupertinoLocalizations.delegate,
           ],
           builder: (context, c) => Directionality(textDirection: TextDirection.rtl, child: c!),
-          home: const Scaffold(body: ContributorScreen()),
+          home: const ContributorScreen(),
         ),
       ),
     );
