@@ -20,6 +20,7 @@
 - **What's Partial**: None. All core requirements, backend durability, transactional integrity, and mobile client screens are fully implemented end-to-end.
 - **What's Blocked**:
   - `mobile/ios/`: `BLOCKED-BY-PLATFORM: macOS required to build iOS target`. Flutter iOS target is fully scaffolded and committed, but compilation requires Xcode on macOS.
+  - `mobile/integration_test/app_test.dart`: `BLOCKED-BY-PLATFORM: cd mobile && C:\flutter\bin\flutter.bat test integration_test/app_test.dart` (Exit 1: No supported devices connected; Hyper-V conflicts with Android emulator without admin reboot). Primary live integration proof provided and passed by `python scripts/e2e.py` (`tests/test_live_e2e_integration.py`).
   - Requirement 6.8: Offline local database sync is marked `OUT-OF-SCOPE` per specification definition of done (manifest endpoint implemented at `GET /api/passages/{id}/offline-package` with offline package download).
 - **The Five Most Important Things the Owners Must Decide or Fix in Their Diagrams**:
   1. **Post-Flag Lifecycle for `ContentStatus.FLAGGED`**: In Sequence 5 (`h_seq5_flagging`), when an Admin takes action, `ReviewableContent.markFlagged()` sets status to `FLAGGED`. However, the diagrams do not specify exit transitions from `FLAGGED` (e.g. unflag/re-verify, permanent deletion, or contributor remediation). An explicit state machine diagram for `ContentStatus` should be added.
