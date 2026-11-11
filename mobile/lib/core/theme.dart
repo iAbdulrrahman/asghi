@@ -2,9 +2,18 @@ import 'package:flutter/material.dart';
 import 'constants.dart';
 
 class AppTheme {
+  static const String fontFamily = 'NotoNaskhArabic';
+
   static ThemeData get lightTheme {
+    final baseTextTheme = ThemeData.light().textTheme.apply(
+      fontFamily: fontFamily,
+    );
+
     return ThemeData(
       useMaterial3: true,
+      fontFamily: fontFamily,
+      textTheme: baseTextTheme,
+      primaryTextTheme: baseTextTheme,
       colorScheme: ColorScheme.light(
         primary: AppConstants.primaryEmerald,
         secondary: AppConstants.accentGold,
@@ -21,6 +30,12 @@ class AppTheme {
         foregroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
+        titleTextStyle: TextStyle(
+          fontFamily: fontFamily,
+          fontSize: 20,
+          fontWeight: FontWeight.bold,
+          color: Colors.white,
+        ),
       ),
       cardTheme: CardThemeData(
         color: AppConstants.surfaceLight,
@@ -38,6 +53,7 @@ class AppTheme {
             borderRadius: BorderRadius.circular(8),
           ),
           textStyle: const TextStyle(
+            fontFamily: fontFamily,
             fontSize: 16,
             fontWeight: FontWeight.bold,
           ),
@@ -52,6 +68,7 @@ class AppTheme {
             borderRadius: BorderRadius.circular(8),
           ),
           textStyle: const TextStyle(
+            fontFamily: fontFamily,
             fontSize: 16,
             fontWeight: FontWeight.bold,
           ),

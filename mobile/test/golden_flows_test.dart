@@ -1,5 +1,7 @@
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -43,6 +45,17 @@ Widget testableWidget(Widget child) {
 }
 
 void main() {
+  setUpAll(() async {
+    TestWidgetsFlutterBinding.ensureInitialized();
+    final fontLoader = FontLoader('NotoNaskhArabic');
+    final fontFile = File('assets/fonts/NotoNaskhArabic.ttf');
+    if (fontFile.existsSync()) {
+      final fontBytes = fontFile.readAsBytesSync();
+      fontLoader.addFont(Future.value(ByteData.view(fontBytes.buffer)));
+      await fontLoader.load();
+    }
+  });
+
   testWidgets('Capture Flow 1 - Contributor Screen', (WidgetTester tester) async {
     await tester.pumpWidget(testableWidget(const ContributorScreen()));
     await tester.pump();

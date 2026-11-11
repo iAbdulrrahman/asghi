@@ -2,6 +2,15 @@
 
 منصة **اصغِ** (Crowdsourced Arabic Listening Practice)
 
+> [!NOTE]
+> **ملاحظة توثيقية حول اللقطات المرفقة (Visual Evidence & Reproduction)**:
+> الصور التوضيحية المرفقة في هذا المستند (`flow_1.png` إلى `flow_5.png`) هي لقطات فحص بصري (Golden Test Renders) ناتجة عن تشغيل اختبار الواجهات الشامل في Flutter (`mobile/test/golden_flows_test.dart`) باستخدام خط `Noto Naskh Arabic` المدمج في المشروع، وليست لقطات مأخوذة من جهاز فعلي (Device Captures).
+> لإعادة توليد هذه اللقطات بدقة وتأكيد سلامة رسم الخط العربي وتشكيله:
+> ```bash
+> cd mobile
+> flutter test test/golden_flows_test.dart --update-goldens
+> ```
+
 يوثق هذا المستند التدفقات الخمسة المعتمدة في النظام وفقاً لمخططات التتابع الرسمية (`h_seq1` حتى `h_seq5`)، مع بيان عناصر الواجهة البرمجية (Widgets)، ونقاط النهاية (Endpoints)، وحالات الانتقال.
 
 ---
