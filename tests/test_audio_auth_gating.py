@@ -23,6 +23,8 @@ def test_audio_endpoint_requires_auth():
     # 1. No token -> 401
     res = client.get("/api/audio/sample_fusha_01.mp3")
     assert res.status_code == 401, f"Expected 401 Unauthorized without token, got {res.status_code}"
+    assert "credentials" in res.json().get("detail", "").lower()
+
 
     # 2. Invalid token in header -> 401
     res = client.get("/api/audio/sample_fusha_01.mp3", headers={"Authorization": "Bearer invalid.token.value"})
