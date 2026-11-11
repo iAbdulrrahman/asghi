@@ -35,3 +35,9 @@ def test_public_check_fails_fast_when_env_unset():
     with open(MAKEFILE_PATH, "r", encoding="utf-8") as f:
         content = f.read()
     assert 'ifndef ASGHI_PUBLIC_URL' in content or 'ASGHI_PUBLIC_URL' in content
+
+    # Run make public-check directly and assert fail fast
+    res = subprocess.run(["make", "public-check"], cwd=ROOT_DIR, env=env, capture_output=True, text=True)
+    assert res.returncode != 0
+    assert "ASGHI_PUBLIC_URL is not set" in (res.stdout + res.stderr)
+
