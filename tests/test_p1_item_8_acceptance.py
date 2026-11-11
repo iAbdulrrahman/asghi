@@ -128,7 +128,7 @@ def test_contributor_upload_real_audio_and_playback_lifecycle(tmp_path):
         assert rec_pending["durationSeconds"] == 60.0
 
         # 8. Stream audio from server as reviewer
-        audio_stream_res = client.get(f"/api/audio/{filename}")
+        audio_stream_res = client.get(f"/api/audio/{filename}", headers={"Authorization": f"Bearer {rev_token}"})
         assert audio_stream_res.status_code == 200
         assert len(audio_stream_res.content) == expected_size
         assert audio_stream_res.content[:4] == b"RIFF"

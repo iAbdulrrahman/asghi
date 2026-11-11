@@ -51,17 +51,23 @@ class AppConstants {
     return raw;
   }
 
-  /// Composes audio stream URLs using live apiBaseUrl.
-  static String resolveAudioUrl(String? urlOrFile) {
+  /// Composes audio stream URLs using live apiBaseUrl, optionally appending auth token.
+  static String resolveAudioUrl(String? urlOrFile, {String? token}) {
     if (urlOrFile == null || urlOrFile.isEmpty) return '';
     final trimmed = urlOrFile.trim();
+    String fullUrl;
     if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
-      return trimmed;
+      fullUrl = trimmed;
+    } else if (trimmed.startsWith('/')) {
+      fullUrl = '$apiBaseUrl$trimmed';
+    } else {
+      fullUrl = '$apiBaseUrl/api/audio/$trimmed';
     }
-    if (trimmed.startsWith('/')) {
-      return '$apiBaseUrl$trimmed';
+    if (token != null && token.isNotEmpty && !fullUrl.contains('token=')) {
+      final sep = fullUrl.contains('?') ? '&' : '?';
+      fullUrl = '$fullUrl${sep}token=$token';
     }
-    return '$apiBaseUrl/api/audio/$trimmed';
+    return fullUrl;
   }
 
   // Brand Palette: High contrast, WCAG 2.1 AA compliant
