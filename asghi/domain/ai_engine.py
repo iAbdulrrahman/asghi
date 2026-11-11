@@ -31,7 +31,7 @@ class AIEngine:
         if target:
             target.text = generated_text
             target.origin = Origin.AI
-            target.changeStatus(ContentStatus.PENDING_REVIEW)
+            target.changeStatus(ContentStatus.DRAFT)
 
         return generated_text
 
@@ -83,7 +83,7 @@ class AIEngine:
                 type=QuestionType.MCQ,
                 passageId=passageId,
                 authorId=None,  # authorId == null <=> origin == AI
-                status=ContentStatus.PENDING_REVIEW,
+                status=ContentStatus.DRAFT,
                 origin=Origin.AI,
             )
             if target:

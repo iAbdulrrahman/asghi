@@ -27,6 +27,7 @@ class _AdminScreenState extends ConsumerState<AdminScreen> with SingleTickerProv
 
   // Report period
   String _selectedPeriod = 'MONTHLY';
+  bool _isGenerating = false;
 
   @override
   void initState() {
@@ -144,6 +145,7 @@ class _AdminScreenState extends ConsumerState<AdminScreen> with SingleTickerProv
   }
 
   Future<void> _triggerAiGeneration() async {
+    setState(() => _isGenerating = true);
     final client = ref.read(apiClientProvider);
     try {
       final resp = await client.dio.post('/api/admin/generate', data: {
@@ -152,9 +154,10 @@ class _AdminScreenState extends ConsumerState<AdminScreen> with SingleTickerProv
       });
       final raw = ApiClient.parseData(resp.data);
       if (mounted) {
+        final generatedTopic = raw is Map ? (raw['topic'] ?? _aiTopicController.text) : _aiTopicController.text;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('تم توليد النص بنجاح: ${raw?['topic'] ?? _aiTopicController.text}'),
+            content: Text('تم توليد المسودة بنجاح: $generatedTopic'),
             backgroundColor: AppConstants.successGreen,
           ),
         );
@@ -165,6 +168,10 @@ class _AdminScreenState extends ConsumerState<AdminScreen> with SingleTickerProv
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('فشل توليد النص: $e'), backgroundColor: AppConstants.errorRed),
         );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isGenerating = false);
       }
     }
   }
@@ -510,9 +517,11 @@ class _AdminScreenState extends ConsumerState<AdminScreen> with SingleTickerProv
             ),
             const SizedBox(height: 16),
             ElevatedButton.icon(
-              icon: const Icon(Icons.auto_awesome),
-              label: const Text('توليد بالذكاء الاصطناعي وحفظ كمسودة'),
-              onPressed: _triggerAiGeneration,
+              icon: _isGenerating
+                  ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                  : const Icon(Icons.auto_awesome),
+              label: Text(_isGenerating ? 'جاري التوليد بالذكاء الاصطناعي...' : 'توليد بالذكاء الاصطناعي وحفظ كمسودة'),
+              onPressed: _isGenerating ? null : _triggerAiGeneration,
             ),
           ],
         ),
