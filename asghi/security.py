@@ -12,7 +12,21 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from asghi.domain.enums import UserRole
 from asghi.domain.user import User
 
-SECRET_KEY = "asghi-fusha-listening-secret-key-prod-2026"
+import os
+
+
+def get_secret_key() -> str:
+    """Retrieve SECRET_KEY from environment, with production fail-fast validation."""
+    env = os.environ.get("ENVIRONMENT", os.environ.get("ENV", "development")).lower()
+    secret = os.environ.get("SECRET_KEY")
+    if env in ("production", "prod"):
+        if not secret:
+            raise RuntimeError("FATAL: SECRET_KEY environment variable must be set in production mode")
+        return secret
+    return secret or "asghi-fusha-listening-secret-key-dev-insecure"
+
+
+SECRET_KEY = get_secret_key()
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24  # 24 hours
 
@@ -27,13 +41,13 @@ def create_access_token(user_id: UUID, roles: List[UserRole]) -> str:
         "roles": [r.value for r in roles],
         "exp": expire,
     }
-    return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
+    return jwt.encode(payload, get_secret_key(), algorithm=ALGORITHM)
 
 
 def decode_access_token(token: str) -> Optional[dict]:
     """Decode and validate JWT token."""
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(token, get_secret_key(), algorithms=[ALGORITHM])
         return payload
     except Exception:
         return None
