@@ -21,16 +21,17 @@ class ReviewableContent(ABC):
         contentId: Optional[UUID] = None,
         authorId: Optional[UUID] = None,
         status: ContentStatus = ContentStatus.DRAFT,
-        origin: Origin = Origin.HUMAN,
+        origin: Optional[Origin] = None,
     ):
         self.contentId: UUID = contentId or uuid4()
         self.authorId: Optional[UUID] = authorId
-        # Enforce invariant: authorId == null <=> origin == AI
-        if self.authorId is None and origin == Origin.HUMAN:
-            # When human authored, an authorId is expected; if none provided, keep origin or assign
-            pass
+        if origin is not None:
+            self.origin: Origin = origin
+        elif self.authorId is not None:
+            self.origin = Origin.HUMAN
+        else:
+            self.origin = Origin.AI
         self.status: ContentStatus = status
-        self.origin: Origin = origin
         self.reviews: List[ReviewAssignment] = []
         self.flags: List[ContentFlag] = []
         self.rejectionReason: Optional[str] = None

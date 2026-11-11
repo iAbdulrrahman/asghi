@@ -23,7 +23,7 @@ class Question(ReviewableContent):
         authorId: Optional[UUID] = None,
         contentId: Optional[UUID] = None,
         status: ContentStatus = ContentStatus.PENDING_REVIEW,
-        origin: Origin = Origin.HUMAN,
+        origin: Optional[Origin] = None,
     ):
         super().__init__(
             contentId=contentId,

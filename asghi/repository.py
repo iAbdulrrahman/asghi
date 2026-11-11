@@ -57,6 +57,7 @@ class Repository:
         """Clear all tables in database for isolated test fixtures."""
         with self._get_conn() as conn:
             conn.execute("PRAGMA foreign_keys = OFF;")
+            conn.execute("DELETE FROM active_claims;")
             conn.execute("DELETE FROM content_flags;")
             conn.execute("DELETE FROM review_assignments;")
             conn.execute("DELETE FROM question_responses;")
@@ -124,7 +125,8 @@ class Repository:
                 author_id TEXT,
                 status TEXT,
                 origin TEXT,
-                rejection_reason TEXT
+                rejection_reason TEXT,
+                CHECK ((author_id IS NULL AND origin = 'AI') OR (author_id IS NOT NULL AND origin = 'HUMAN'))
             );
 
             CREATE TABLE IF NOT EXISTS audio_recordings (
@@ -137,7 +139,8 @@ class Repository:
                 status TEXT,
                 origin TEXT,
                 rejection_reason TEXT,
-                FOREIGN KEY (passage_id) REFERENCES passages(passage_id) ON DELETE CASCADE
+                FOREIGN KEY (passage_id) REFERENCES passages(passage_id) ON DELETE CASCADE,
+                CHECK ((author_id IS NULL AND origin = 'AI') OR (author_id IS NOT NULL AND origin = 'HUMAN'))
             );
 
             CREATE TABLE IF NOT EXISTS questions (
@@ -154,13 +157,21 @@ class Repository:
                 status TEXT,
                 origin TEXT,
                 rejection_reason TEXT,
+                FOREIGN KEY (passage_id) REFERENCES passages(passage_id) ON DELETE CASCADE,
+                CHECK ((author_id IS NULL AND origin = 'AI') OR (author_id IS NOT NULL AND origin = 'HUMAN'))
+            );
+
+            CREATE TABLE IF NOT EXISTS active_claims (
+                passage_id TEXT PRIMARY KEY,
+                contributor_id TEXT NOT NULL,
+                claimed_at TIMESTAMP NOT NULL,
                 FOREIGN KEY (passage_id) REFERENCES passages(passage_id) ON DELETE CASCADE
             );
 
             CREATE TABLE IF NOT EXISTS review_assignments (
                 review_id TEXT PRIMARY KEY,
-                content_id TEXT,
-                reviewer_id TEXT,
+                content_id TEXT NOT NULL,
+                reviewer_id TEXT NOT NULL,
                 created_at TEXT,
                 is_specialist INTEGER,
                 is_approved INTEGER,
@@ -168,12 +179,13 @@ class Repository:
                 is_fusha INTEGER,
                 dialect_free INTEGER,
                 audio_quality INTEGER,
-                feedback_text TEXT
+                feedback_text TEXT,
+                UNIQUE (reviewer_id, content_id)
             );
 
             CREATE TABLE IF NOT EXISTS content_flags (
                 flag_id TEXT PRIMARY KEY,
-                content_id TEXT,
+                content_id TEXT NOT NULL,
                 reporter_id TEXT,
                 reason TEXT,
                 status TEXT
@@ -181,12 +193,13 @@ class Repository:
 
             CREATE TABLE IF NOT EXISTS test_sessions (
                 session_id TEXT PRIMARY KEY,
-                passage_id TEXT,
+                passage_id TEXT NOT NULL,
                 learner_id TEXT,
                 started_at TEXT,
                 finished_at TEXT,
                 total_score INTEGER,
-                current_difficulty TEXT
+                current_difficulty TEXT,
+                FOREIGN KEY (passage_id) REFERENCES passages(passage_id) ON DELETE CASCADE
             );
 
             CREATE TABLE IF NOT EXISTS question_responses (
@@ -197,7 +210,7 @@ class Repository:
                 is_correct INTEGER,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (session_id) REFERENCES test_sessions(session_id) ON DELETE CASCADE,
-                FOREIGN KEY (question_id) REFERENCES questions(question_id)
+                FOREIGN KEY (question_id) REFERENCES questions(question_id) ON DELETE CASCADE
             );
             """)
 
@@ -299,6 +312,20 @@ class Repository:
                 passage.origin.value,
                 passage.rejectionReason,
             ))
+            if passage.claimedBy:
+                conn.execute('''
+                INSERT INTO active_claims (passage_id, contributor_id, claimed_at)
+                VALUES (?, ?, ?)
+                ON CONFLICT(passage_id) DO UPDATE SET
+                    contributor_id=excluded.contributor_id,
+                    claimed_at=excluded.claimed_at;
+                ''', (
+                    str(passage.passageId),
+                    str(passage.claimedBy),
+                    passage.claimedAt.isoformat() if passage.claimedAt else datetime.now(timezone.utc).isoformat(),
+                ))
+            else:
+                conn.execute('DELETE FROM active_claims WHERE passage_id = ?;', (str(passage.passageId),))
 
             for rec in passage.audioRecordings:
                 conn.execute("""
@@ -668,6 +695,7 @@ class Repository:
     def get_user_by_id(self, user_id: UUID) -> Optional[User]:
         for u in User._registry:
             if u.userId == user_id:
+                self.save_user(u)
                 return u
         with self._get_conn() as conn:
             ur = conn.execute("SELECT * FROM users WHERE user_id = ?;", (str(user_id),)).fetchone()
@@ -692,6 +720,7 @@ class Repository:
     def get_passage_by_id(self, passage_id: UUID) -> Optional[Passage]:
         for p in Passage._registry:
             if p.passageId == passage_id:
+                self.save_passage(p)
                 return p
         self.load_all_from_db()
         for p in Passage._registry:

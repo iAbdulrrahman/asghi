@@ -704,10 +704,11 @@ def start_learner_session(req: StartSessionRequest, user: User = Depends(get_cur
     if not target_p:
         raise HTTPException(status_code=404, detail="النص غير موجود")
 
+    repo = get_repository()
+    repo.save_passage(target_p)
     session = learner_prof.startSession(req.passageId)
     session.learnerId = user.userId
     active_sessions[session.sessionId] = session
-    repo = get_repository()
     repo.save_test_session(session)
 
     return {
