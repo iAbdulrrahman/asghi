@@ -23,20 +23,24 @@ The application reads configuration from environment variables:
 - `SECRET_KEY`: Cryptographic signing key for JWT tokens. In `ENVIRONMENT=production` mode, this variable is **required** and the application fails fast if unset. In development mode, a secure fallback is provided.
 - `ENVIRONMENT`: Set to `production` or `development` (default: `development`).
 - `ASGHI_DB_PATH`: Optional path to SQLite database (default: `asghi.db`).
+- `ASGHI_SEED_PASSWORD`: Master password applied to all seeded accounts when initializing. When omitted in development, well-known defaults (`LearnerPass123!`, etc.) are used. In non-development environments, a security warning is emitted if defaults are used.
 
 Example:
 ```bash
-# Production mode
+# Production mode with credential rotation
 export ENVIRONMENT=production
 export SECRET_KEY="your-strong-production-random-secret-key"
+export ASGHI_SEED_PASSWORD="strong-production-seed-password-rotated"
 ```
 
-### 4. Database Seeding
+### 4. Database Seeding & Credential Rotation
 Seed the database with sample listening passages, tiered comprehension questions (Easy, Medium, Hard), and seed accounts across all four roles (Admin, Reviewers, Contributor, Learner):
 ```bash
 python seed.py
 # Root entry point delegating to asghi.seed
 ```
+> 🔒 **Credential Rotation & Security Policy**:
+> For public or production deployments, never deploy with default passwords. Set `ASGHI_SEED_PASSWORD` or pass custom `password_overrides` to `seed_database(password_overrides={...})` to rotate initial credentials. Seed accounts can also rotate their passwords via the authentication profile API.
 
 ### 5. Running the Application
 Start the ASGI web server with Uvicorn:
