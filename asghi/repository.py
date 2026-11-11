@@ -841,3 +841,129 @@ class Repository:
                 if p.claimedBy and p.isClaimExpired():
                     p.releaseClaim()
             return freed
+
+    def submit_verdict_tx(
+        self,
+        assignment_id: UUID,
+        reviewer_id: UUID,
+        is_fusha: bool,
+        dialect_free: bool,
+        audio_quality: int,
+        is_approved: bool,
+        reason: str = "",
+        fail_injection: bool = False,
+    ) -> bool:
+        """P1 Item 6: assignment + feedback + approval count + content status + claim release + reputation
+        in ONE atomic transaction.
+        """
+        effective_approval = is_approved if (is_fusha and dialect_free) else False
+        effective_reason = reason if (is_fusha and dialect_free) else (reason or "Rejected: recording must be in Fusha and dialect-free (Req 5.5)")
+
+        with self._get_conn() as conn:
+            conn.execute("BEGIN IMMEDIATE;")
+            try:
+                # 1. Verify assignment exists
+                a_row = conn.execute(
+                    "SELECT content_id, is_specialist FROM review_assignments WHERE review_id = ?;",
+                    (str(assignment_id),)
+                ).fetchone()
+                if not a_row:
+                    conn.execute("ROLLBACK;")
+                    return False
+
+                content_id = a_row["content_id"]
+                is_specialist = bool(a_row["is_specialist"])
+
+                # 2. Update review_assignment and feedback
+                conn.execute("""
+                    UPDATE review_assignments
+                    SET is_approved = ?, reason = ?, is_fusha = ?, dialect_free = ?, audio_quality = ?, feedback_text = ?
+                    WHERE review_id = ?;
+                """, (
+                    1 if effective_approval else 0,
+                    effective_reason,
+                    1 if is_fusha else 0,
+                    1 if dialect_free else 0,
+                    audio_quality,
+                    effective_reason,
+                    str(assignment_id),
+                ))
+
+                # 3. Derive approval count & check threshold
+                revs = conn.execute("""
+                    SELECT is_approved, is_specialist, reviewer_id
+                    FROM review_assignments
+                    WHERE content_id = ? AND is_approved IS NOT NULL;
+                """, (content_id,)).fetchall()
+
+                approved_revs = [r for r in revs if r["is_approved"] == 1]
+                meets_threshold = any(r["is_specialist"] for r in approved_revs) or len({r["reviewer_id"] for r in approved_revs}) >= 3
+
+                rejected_revs = [r for r in revs if r["is_approved"] == 0]
+                is_rejected = (not effective_approval) and (is_specialist or len(rejected_revs) >= 2)
+
+                new_status = None
+                if meets_threshold:
+                    new_status = "VERIFIED"
+                elif is_rejected:
+                    new_status = "REJECTED"
+
+                # 4. Update content status and release claim on parent passage
+                if new_status:
+                    conn.execute(
+                        "UPDATE audio_recordings SET status = ?, rejection_reason = ? WHERE recording_id = ?;",
+                        (new_status, effective_reason if new_status == "REJECTED" else None, content_id)
+                    )
+                    conn.execute(
+                        "UPDATE questions SET status = ?, rejection_reason = ? WHERE question_id = ?;",
+                        (new_status, effective_reason if new_status == "REJECTED" else None, content_id)
+                    )
+                    conn.execute(
+                        "UPDATE passages SET status = ?, rejection_reason = ? WHERE passage_id = ?;",
+                        (new_status, effective_reason if new_status == "REJECTED" else None, content_id)
+                    )
+
+                    parent_row = conn.execute(
+                        "SELECT passage_id, author_id FROM audio_recordings WHERE recording_id = ?;",
+                        (content_id,)
+                    ).fetchone()
+                    parent_pid = parent_row["passage_id"] if parent_row else content_id
+                    author_id = parent_row["author_id"] if parent_row else None
+
+                    conn.execute("UPDATE passages SET claimed_by = NULL, claimed_at = NULL WHERE passage_id = ?;", (parent_pid,))
+                    conn.execute("DELETE FROM active_claims WHERE passage_id = ?;", (parent_pid,))
+
+                    # 5. Contributor reputation update
+                    if author_id:
+                        delta = 10 if new_status == "VERIFIED" else -5
+                        conn.execute("""
+                            UPDATE user_profiles
+                            SET score = score + ?, total_submissions = total_submissions + 1
+                            WHERE (user_id = ? OR profile_id = ?) AND role = 'CONTRIBUTOR';
+                        """, (delta, str(author_id), str(author_id)))
+
+                # 6. Reviewer reputation update
+                conn.execute("""
+                    UPDATE user_profiles
+                    SET score = score + 10, total_submissions = total_submissions + 1
+                    WHERE (profile_id = ? OR user_id = ?) AND role = 'REVIEWER';
+                """, (str(reviewer_id), str(reviewer_id)))
+
+                if fail_injection:
+                    raise RuntimeError("Injected failure for atomicity testing")
+
+                conn.commit()
+
+                # Synchronize in-memory objects after successful commit
+                for u in User._registry:
+                    for prof in u.userProfiles:
+                        if isinstance(prof, ReviewerProfile):
+                            for a in prof.assignments:
+                                if a.reviewId == assignment_id:
+                                    fb = prof.createFeedback(is_fusha, dialect_free, audio_quality, effective_reason)
+                                    prof.submitDecision(a, fb, effective_approval, effective_reason)
+                                    break
+                return True
+            except Exception:
+                conn.execute("ROLLBACK;")
+                raise

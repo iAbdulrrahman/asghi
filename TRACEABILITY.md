@@ -21,7 +21,7 @@
 | 4.2 | DONE | `asghi/domain/contributor_profile.py::ContributorProfile.recordOrUploadAudio`, `POST /api/contributor/submit-audio` | `tests/test_contributor_api.py::test_upload_audio_recording` |
 | 4.3 | DONE | `asghi/domain/contributor_profile.py::ContributorProfile.toggleTashkeel`, `GET /api/passages/{id}/text` | `tests/test_contributor_api.py::test_passage_display_and_tashkeel_toggle` |
 | 4.4 | DONE | `asghi/domain/enums.py::AttributionType`, `asghi/domain/audio_recording.py::AudioRecording.attribution` | `tests/test_contributor_api.py::test_attribution_choice` |
-| 5 | DONE | `asghi/domain/reviewer_profile.py::ReviewerProfile`, `POST /api/reviewer/decision` | `tests/test_review_api.py::test_reviewer_verification_flow` |
+| 5 | DONE | `asghi/domain/reviewer_profile.py::ReviewerProfile`, `POST /api/reviewer/decision`, `asghi/repository.py::submit_verdict_tx` | `tests/test_review_api.py::test_reviewer_verification_flow`, `tests/test_fix_6_verdict_atomicity.py::test_verdict_atomicity_rollback_on_injected_failure` |
 | 5.1 | DONE | `asghi/domain/reviewer_profile.py::ReviewerProfile.getAudioFile`, `createFeedback`, `submitDecision` | `tests/test_review_api.py::test_reviewer_evaluation` |
 | 5.2 | DONE | `asghi/domain/reviewable_content.py::ReviewableContent.meetsThreshold` | `tests/test_review_api.py::test_specialist_vs_general_reviewers_threshold` |
 | 5.3 | DONE | `asghi/domain/reviewer_profile.py::ReviewerProfile.assignReview`, `POST /api/reviewer/assignments` | `tests/test_review_api.py::test_prevent_author_self_review` |
