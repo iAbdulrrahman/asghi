@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants.dart';
+import '../../core/api_client.dart';
 import '../../providers/providers.dart';
 import 'register_screen.dart';
 
@@ -37,12 +38,94 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
   }
 
+  void _showServerSettingsDialog() {
+    final controller = TextEditingController(text: AppConstants.apiBaseUrl);
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('إعدادات عنوان الخادم', textDirection: TextDirection.rtl),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'أدخل عنوان خادم API (يدعم http و https):',
+              style: TextStyle(fontSize: 13, color: Colors.grey),
+              textDirection: TextDirection.rtl,
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              key: const Key('server_address_field'),
+              controller: controller,
+              decoration: const InputDecoration(
+                hintText: 'مثال: https://invoicing.0xabdul.dev',
+                prefixIcon: Icon(Icons.link),
+              ),
+              textDirection: TextDirection.ltr,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            key: const Key('server_address_reset_button'),
+            onPressed: () async {
+              await ApiClient().setBaseUrl(null);
+              if (mounted) {
+                Navigator.of(ctx).pop();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('تمت استعادة عنوان الخادم الافتراضي')),
+                );
+              }
+            },
+            child: const Text('إعادة تعيين'),
+          ),
+          ElevatedButton(
+            key: const Key('server_address_save_button'),
+            onPressed: () async {
+              final val = controller.text.trim();
+              final success = await ApiClient().setBaseUrl(val);
+              if (!success && mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('عنوان الخادم غير صالح. تأكد من إدخال عنوان صحيح.'),
+                    backgroundColor: AppConstants.errorRed,
+                  ),
+                );
+                return;
+              }
+              if (mounted) {
+                Navigator.of(ctx).pop();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('تم ضبط عنوان الخادم إلى: ' + AppConstants.apiBaseUrl),
+                    backgroundColor: AppConstants.successGreen,
+                  ),
+                );
+              }
+            },
+            child: const Text('حفظ'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('تسجيل الدخول')),
+      appBar: AppBar(
+        title: const Text('تسجيل الدخول'),
+        actions: [
+          IconButton(
+            key: const Key('server_settings_button'),
+            icon: const Icon(Icons.dns_outlined),
+            tooltip: 'إعدادات عنوان الخادم',
+            onPressed: _showServerSettingsDialog,
+          ),
+        ],
+      ),
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),

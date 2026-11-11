@@ -192,7 +192,7 @@ class _ReviewerScreenState extends ConsumerState<ReviewerScreen> with SingleTick
                           final recordingId = (item['recordingId'] ?? item['contentId'] ?? '').toString();
                           final topic = item['topic'] ?? item['passageTopic'] ?? 'عام';
                           final text = item['passageText'] ?? item['text'] ?? '';
-                          final audioUrl = item['audioUrl'] ?? item['audioFile'] ?? '';
+                          final audioUrl = AppConstants.resolveAudioUrl((item['audioUrl'] ?? item['audioFile'] ?? '').toString());
                           final duration = item['durationSeconds'] ?? 0;
 
                           return Card(
