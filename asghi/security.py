@@ -69,6 +69,10 @@ def get_current_user(
 
     for u in User._registry:
         if str(u.userId) == user_id_str:
+            try:
+                get_repository().save_user(u)
+            except Exception:
+                pass
             return u
 
     raise HTTPException(

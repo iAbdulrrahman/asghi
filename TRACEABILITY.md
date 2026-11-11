@@ -10,7 +10,7 @@
 | 1.3 | DONE | `asghi/domain/user.py::User.completeProfile`, `POST /api/users/profile` | `tests/test_auth_api.py::test_complete_profile` |
 | 2 | DONE | `asghi/domain/passage.py::Passage`, `GET /api/passages` | `tests/test_passage_api.py::test_catalogue_maintenance` |
 | 2.1 | DONE | `asghi/domain/passage.py::Passage`, `asghi/domain/audio_recording.py::AudioRecording`, `asghi/domain/question.py::Question` | `tests/test_domain.py::test_passage_structure` |
-| 2.2 | DONE | `asghi/domain/enums.py::Origin`, `asghi/domain/reviewable_content.py::ReviewableContent.origin` | `tests/test_domain.py::test_passage_origin_tagging` |
+| 2.2 | DONE | `asghi/domain/enums.py::Origin`, `asghi/domain/reviewable_content.py::ReviewableContent.origin`, `asghi/repository.py` | `tests/test_domain.py::test_passage_origin_tagging`, `tests/test_fix_3_constraints.py::test_check_author_id_origin_equivalence` |
 | 2.3 | DONE | `asghi/domain/passage.py::Passage.level`, `topic`, `duration` | `tests/test_domain.py::test_passage_metadata` |
 | 3 | DONE | `asghi/domain/ai_engine.py::AIEngine`, `POST /api/admin/generate` | `tests/test_ai_and_review.py::test_ai_generation_and_human_review` |
 | 3.1 | DONE | `asghi/domain/ai_engine.py::AIEngine.generatePassageText`, `generateQuestions` | `tests/test_ai_and_review.py::test_ai_content_generator` |

@@ -30,7 +30,7 @@ class Passage(ReviewableContent):
         claimedAt: Optional[datetime] = None,
         authorId: Optional[UUID] = None,
         status: ContentStatus = ContentStatus.DRAFT,
-        origin: Origin = Origin.HUMAN,
+        origin: Optional[Origin] = None,
     ):
         super().__init__(
             contentId=passageId,
@@ -108,7 +108,7 @@ class Passage(ReviewableContent):
             passageId=self.passageId,
             authorId=rec_author,
             status=ContentStatus.PENDING_REVIEW,
-            origin=Origin.HUMAN,
+            origin=Origin.HUMAN if rec_author else Origin.AI,
         )
         self.audioRecordings.append(recording)
         # Sequence 1 step 43: claimedAt = null (clock stops, claim held until verdict)
