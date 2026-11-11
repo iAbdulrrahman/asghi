@@ -53,6 +53,26 @@ Every fix and feature was developed on an isolated branch off `master`, tested w
 | 22 | `docs/22-history-and-progress` | `docs-22` | Updated project history, audit reconciliation, and final status in `HISTORY.md` and `PROGRESS.md` | Consistency audit |
 | 23 | `master` | `v2.0.0-final` | Clean grep gate: zero occurrences of `Mock`/`dummy`/`placeholder` in production code | `grep -r "Mock\|dummy\|placeholder" mobile/lib asghi` |
 
+
+### Pass 4: Arabic Typography, Live Android Device Run, Hermetic Pipeline, & Honest Audit Trail
+| Item | Branch | Tag | Description | Failing Test Catching It |
+|---|---|---|---|---|
+| 24 | `fix/24-arabic-font` | `fix-24` | Bundled `Noto Naskh Arabic` font (OFL license), registered globally in `AppTheme.fontFamily`, and regenerated legible goldens with authentic Arabic ligatures | `mobile/test/font_and_theme_test.dart` |
+| 25 | `fix/25-mobile-run` | `fix-25` | Booted Android emulator (`emulator-5554`, API 33) with WHPX acceleration, established `adb reverse tcp:8000`, ran live `app_test.dart`, fixed audio player layout overflow, captured `mobile/docs/device_flow_1.png` (1.3 MB), and updated TRACEABILITY.md (Row 11 DONE, Row 20 DONE) | Live integration run & RenderFlex overflow on device |
+| 26 | `fix/26-hermetic-make-check` | `fix-26` | Implemented isolated `.venv` build pipeline in `Makefile`, routed all targets through venv python, removed redundant typed_data import, and verified `make check` passes with stripped PATH (no global pytest) | Missing global pytest check |
+
+---
+
+## 4. Current Verification Metrics (Pass 4)
+
+- **Total Python Backend Tests**: 92 passed in ~15.4 seconds (`.venv/Scripts/python.exe -m pytest`)
+- **Total Python Restart Persistence Tests**: 1 passed in ~1.9 seconds (`.venv/Scripts/python.exe -m pytest tests/test_fix_4_seed_restart.py`)
+- **Total Python Live Server E2E Tests**: 1 full multi-role integration suite passed in ~3.5 seconds (`.venv/Scripts/python.exe scripts/e2e.py`)
+- **Total Flutter Mobile Tests**: 26 tests passed across 8 test files in ~5.0 seconds (`cd mobile && flutter test`)
+- **Static Analysis**: 0 issues found (`cd mobile && flutter analyze`)
+- **Live Mobile Device Integration**: Passed on Android emulator `emulator-5554` (`python scripts/run_mobile_device.py`)
+- **Hermetic make check**: 100% passing with global pytest stripped from PATH
+
 ---
 
 ## 2. Test Suite Summary
