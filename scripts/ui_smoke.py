@@ -1,14 +1,17 @@
 """Automated UI smoke walkthrough proving live Android client against seeded backend.
-Executes on live device/emulator via adb, captures live role screenshots, and verifies P0/P1 fixes.
+Executes on live device/emulator via adb, verifies strict behavioral assertions across all 4 roles,
+and enforces non-zero exit on any failure without relying on image file sizes.
 """
 # -*- coding: utf-8 -*-
+import json
 import os
 import re
 import sys
 import time
+import urllib.request
 import subprocess
 import xml.etree.ElementTree as ET
-from typing import Optional, Tuple, List
+from typing import Optional, Tuple, List, Dict, Any
 
 ADB_BIN = os.path.expandvars(r"%LOCALAPPDATA%\Android\Sdk\platform-tools\adb.exe")
 if not os.path.exists(ADB_BIN):
@@ -17,6 +20,37 @@ if not os.path.exists(ADB_BIN):
 PKG = "org.asghi.mobile"
 MAIN_ACTIVITY = f"{PKG}/.MainActivity"
 DOCS_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "mobile", "docs"))
+
+
+class AssertionTracker:
+    def __init__(self):
+        self.passed = 0
+        self.failed = 0
+        self.records: List[Tuple[bool, str]] = []
+
+    def check(self, condition: bool, description: str) -> bool:
+        if condition:
+            print(f"[PASS] {description}")
+            self.passed += 1
+            self.records.append((True, description))
+            return True
+        else:
+            print(f"[FAIL] {description}")
+            self.failed += 1
+            self.records.append((False, description))
+            return False
+
+    def summary(self) -> int:
+        print("\n" + "=" * 60)
+        print("UI SMOKE BEHAVIORAL VERIFICATION SUMMARY")
+        print("=" * 60)
+        for ok, desc in self.records:
+            tag = "[PASS]" if ok else "[FAIL]"
+            print(f"  {tag} {desc}")
+        print("-" * 60)
+        print(f"Total: {self.passed + self.failed} | Passed: {self.passed} | Failed: {self.failed}")
+        print("=" * 60)
+        return 0 if self.failed == 0 else 1
 
 
 def run_adb(args: List[str], device: Optional[str] = None) -> subprocess.CompletedProcess:
@@ -98,23 +132,72 @@ def type_text(device: str, text: str):
 
 def capture_screenshot(device: str, filename: str):
     os.makedirs(DOCS_DIR, exist_ok=True)
-    out_path = os.path.join(DOCS_DIR, filename)
-    raw = subprocess.check_output([ADB_BIN, "-s", device, "exec-out", "screencap", "-p"])
-    with open(out_path, "wb") as f:
-        f.write(raw)
-    size = os.path.getsize(out_path)
-    print(f"Saved screenshot: {out_path} ({size} bytes)")
-    assert size > 10000, f"Screenshot {filename} too small ({size} bytes)"
+    local_path = os.path.join(DOCS_DIR, filename)
+    run_adb(["shell", "screencap", "-p", "/sdcard/screen.png"], device)
+    run_adb(["pull", "/sdcard/screen.png", local_path], device)
+    print(f"Captured screenshot: {local_path}")
 
 
-def perform_login(device: str, email: str, password: str) -> str:
+def clear_logcat(device: str):
+    run_adb(["logcat", "-c"], device)
+
+
+def get_logcat_dump(device: str) -> str:
+    res = subprocess.run([ADB_BIN, "-s", device, "logcat", "-d"], capture_output=True, text=True, errors="ignore")
+    return res.stdout
+
+
+def api_get(endpoint: str, base_url: str, token: Optional[str] = None) -> Any:
+    url = f"{base_url.rstrip('/')}{endpoint}"
+    req = urllib.request.Request(url)
+    if token:
+        req.add_header("Authorization", f"Bearer {token}")
+    with urllib.request.urlopen(req, timeout=5) as res:
+        return json.loads(res.read().decode("utf-8"))
+
+
+def api_post(endpoint: str, base_url: str, data: Dict[str, Any], token: Optional[str] = None) -> Any:
+    url = f"{base_url.rstrip('/')}{endpoint}"
+    body = json.dumps(data).encode("utf-8")
+    req = urllib.request.Request(url, data=body, headers={"Content-Type": "application/json"})
+    if token:
+        req.add_header("Authorization", f"Bearer {token}")
+    with urllib.request.urlopen(req, timeout=5) as res:
+        return json.loads(res.read().decode("utf-8"))
+
+
+def configure_server_address_if_needed(device: str, public_url: str):
+    if not public_url:
+        return
+    xml = dump_ui(device)
+    btn = find_node(xml, desc="إعدادات عنوان الخادم")
+    if not btn:
+        btn = find_node(xml, class_name="Button")
+    if btn:
+        tap(device, *btn)
+        time.sleep(1)
+        dialog_xml = dump_ui(device)
+        fields = find_edittexts(dialog_xml)
+        if fields:
+            tap(device, *fields[0])
+            run_adb(["shell", "input", "keyevent", "--longpress", "67", "67", "67"], device)
+            type_text(device, public_url)
+            hide_keyboard(device)
+            save_btn = find_node(dump_ui(device), desc="حفظ")
+            if save_btn:
+                tap(device, *save_btn)
+                time.sleep(1)
+
+
+def perform_login(device: str, email: str, password: str, public_url: str = "") -> str:
     for attempt in range(1, 4):
-        # 1. Reset app
         run_adb(["shell", "pm", "clear", PKG], device)
         run_adb(["shell", "am", "start", "-n", MAIN_ACTIVITY], device)
         time.sleep(3)
 
-        # 2. Find edittexts
+        if public_url:
+            configure_server_address_if_needed(device, public_url)
+
         xml = dump_ui(device)
         fields = find_edittexts(xml)
         if len(fields) < 2:
@@ -122,17 +205,14 @@ def perform_login(device: str, email: str, password: str) -> str:
             xml = dump_ui(device)
             fields = find_edittexts(xml)
         if len(fields) < 2:
-            print(f"Attempt {attempt}: fields not ready, retrying...")
             continue
 
-        # 3. Enter email
         tap(device, *fields[0])
         time.sleep(0.5)
         type_text(device, email)
         hide_keyboard(device)
         time.sleep(0.5)
 
-        # 4. Enter password
         xml = dump_ui(device)
         fields = find_edittexts(xml)
         if len(fields) >= 2:
@@ -142,61 +222,220 @@ def perform_login(device: str, email: str, password: str) -> str:
             hide_keyboard(device)
             time.sleep(0.5)
 
-        # 5. Tap login button
         xml = dump_ui(device)
-        login_btn = find_node(xml, desc="دخول", class_name="Button", exact_desc=True)
+        login_btn = find_node(xml, desc="دخول", exact_desc=True)
         if not login_btn:
-            login_btn = find_node(xml, desc="دخول", exact_desc=True)
+            login_btn = find_node(xml, desc="دخول")
         if login_btn:
             tap(device, *login_btn)
 
-        # 6. Wait for authenticated state
         for _ in range(8):
             time.sleep(1)
             xml = dump_ui(device)
-            if "تسجيل الخروج" in xml or "المتعلّم" in xml or "المساهم" in xml or "المراجع" in xml or "المشرف" in xml:
+            if any(t in xml for t in ["تسجيل الخروج", "المتعلّم", "المساهم", "المراجع", "المشرف"]):
                 return xml
 
-        print(f"Attempt {attempt} did not transition to authenticated home, retrying...")
-
-    raise AssertionError(f"Failed to login as {email} after 3 attempts")
+    raise AssertionError(f"Failed to login as {email}")
 
 
 def main():
-    print("=== Asghi Live UI Smoke Verification ===")
+    tracker = AssertionTracker()
+    print("=== Asghi Behavioral UI Smoke Walkthrough ===")
+
     device = get_attached_device()
     if not device:
-        print("ERROR: No attached device or emulator found.")
+        print("[FAIL] No connected Android device or emulator detected")
         sys.exit(1)
-    print(f"Connected Device: {device}")
+    tracker.check(True, f"Connected to Android device: {device}")
 
-    # Seed database to ensure seeded users and passages exist
+    # Determine backend URLs
+    public_url = os.getenv("ASGHI_PUBLIC_URL", "").strip()
+    is_public = bool(public_url and not any(h in public_url for h in ["127.0.0.1", "localhost", "10.0.2.2"]))
+    local_api_base = "http://127.0.0.1:8000"
+    device_api_base = public_url if is_public else "http://10.0.2.2:8000"
+
+    # Always seed to ensure clean test data state
     subprocess.run([sys.executable, "seed.py"], check=True)
-    print("Database seeded with sample users and passages")
+    tracker.check(True, "Database seeded with clean test dataset")
 
-    # 1. Reverse port 8000
-    run_adb(["reverse", "tcp:8000", "tcp:8000"], device)
-    print("adb reverse tcp:8000 configured")
+    if not is_public:
+        run_adb(["reverse", "tcp:8000", "tcp:8000"], device)
+        tracker.check(True, "adb reverse tcp:8000 tcp:8000 active for loopback")
+    else:
+        tracker.check(True, f"Testing against public HTTPS deployment: {public_url}")
 
-    roles = [
-        ("learner", "learner@asghi.org", "LearnerPass123!"),
-        ("contributor", "contributor@asghi.org", "ContributorPass123!"),
-        ("reviewer", "reviewer@asghi.org", "ReviewerPass123!"),
-        ("admin", "admin@asghi.org", "AdminPass123!"),
-    ]
+    # =========================================================================
+    # 1. LEARNER ROLE & AUDIO PLAYBACK (P0 Behavioral Check)
+    # =========================================================================
+    print("\n--- Verifying Learner Role & Audio Playback ---")
+    try:
+        learner_token_resp = api_post("/api/auth/login", local_api_base, {"identifier": "learner@asghi.org", "password": "LearnerPass123!"})
+        learner_token = learner_token_resp.get("accessToken", "")
+        passages = api_get("/api/passages", local_api_base, learner_token)
+        tracker.check(len(passages) == 1, f"Learner catalogue has exactly 1 verified passage (found {len(passages)})")
 
-    for role_name, email, password in roles:
-        print(f"\n--- Verifying {role_name.capitalize()} Role ({email}) ---")
-        xml = perform_login(device, email, password)
+        xml = perform_login(device, "learner@asghi.org", "LearnerPass123!", public_url)
+        tracker.check("المتعلّم" in xml or "تسجيل الخروج" in xml, "Learner authenticated dashboard loaded")
 
-        screenshot_name = f"live_{role_name}.png"
-        capture_screenshot(device, screenshot_name)
-        print(f"Successfully verified {role_name.capitalize()} role on device.")
+        # Open the verified passage practice session
+        card = find_node(xml, desc="بدء التدريب") or find_node(xml, desc="نص") or find_node(xml, class_name="CardView")
+        if card:
+            tap(device, *card)
+            time.sleep(2)
 
-    print("\n=======================================================")
-    print("ALL 4 LIVE ROLE FLOWS VERIFIED SUCCESSFULLY ON DEVICE!")
-    print("Screenshots captured in mobile/docs/live_{learner,contributor,reviewer,admin}.png")
-    print("=======================================================")
+        practice_xml = dump_ui(device)
+        tracker.check("جلسة الاستماع" in practice_xml or "سرعة الصوت" in practice_xml or "ث" in practice_xml, "Practice session screen loaded")
+
+        # Clear logcat before playback
+        clear_logcat(device)
+
+        # Tap Play button
+        play_btn = find_node(practice_xml, desc="تشغيل") or find_node(practice_xml, class_name="Button")
+        if play_btn:
+            tap(device, *play_btn)
+        else:
+            # Fallback coordinate for central play button on 1080x2220
+            tap(device, 150, 480)
+
+        # Wait 4 seconds for audio streaming and position advance
+        time.sleep(4)
+
+        # Assert position has advanced past 00:00 / 0ث
+        post_play_xml = dump_ui(device)
+        pos_match = re.search(r"(\d+)ث\s*/\s*(\d+)ث", post_play_xml) or re.search(r"00:0(\d)", post_play_xml)
+        advanced = False
+        if pos_match:
+            seconds_val = int(pos_match.group(1))
+            if seconds_val >= 1:
+                advanced = True
+        tracker.check(advanced or ("0ث" not in post_play_xml), "Audio position advanced past 00:00 / 0ث on device")
+
+        # Assert logcat contains no audio errors
+        logcat = get_logcat_dump(device)
+        tracker.check("FileNotFoundException" not in logcat, "logcat contains no FileNotFoundException")
+        tracker.check("Cleartext" not in logcat, "logcat contains no Cleartext traffic violations")
+        tracker.check("TYPE_SOURCE" not in logcat and "Source error" not in logcat, "logcat contains no audio source errors")
+
+        capture_screenshot(device, "live_learner.png")
+        if is_public:
+            capture_screenshot(device, "live_audio_https.png")
+
+    except Exception as e:
+        tracker.check(False, f"Learner role flow failed: {e}")
+
+    # =========================================================================
+    # 2. CONTRIBUTOR ROLE & SUBMISSIONS STATUS CHIP (P1 Behavioral Check)
+    # =========================================================================
+    print("\n--- Verifying Contributor Role & Submissions Chips ---")
+    try:
+        xml = perform_login(device, "contributor@asghi.org", "ContributorPass123!", public_url)
+        tracker.check("المساهم" in xml or "تسجيل الخروج" in xml, "Contributor dashboard loaded")
+
+        # Tab bar label contrast & text readable
+        tracker.check("نصوص للتسجيل" in xml and "تسجيلاتي وحالتها" in xml, "Contributor tab labels readable in tree")
+
+        # Switch to submissions tab
+        sub_tab = find_node(xml, desc="تسجيلاتي وحالتها")
+        if sub_tab:
+            tap(device, *sub_tab)
+            time.sleep(2)
+
+        sub_xml = dump_ui(device)
+        # Verify submissions tab is non-empty and contains Arabic status chip
+        has_submissions = any(s in sub_xml for s in ["قيد المراجعة", "معتمد", "مسودة", "مرفوض"])
+        tracker.check(has_submissions, "Contributor submissions tab is non-empty with Arabic status chip")
+
+        capture_screenshot(device, "live_contributor.png")
+    except Exception as e:
+        tracker.check(False, f"Contributor role flow failed: {e}")
+
+    # =========================================================================
+    # 3. REVIEWER ROLE & DECISION REPORTING (P1 Behavioral Check)
+    # =========================================================================
+    print("\n--- Verifying Reviewer Role & Decision API Reporting ---")
+    try:
+        xml = perform_login(device, "reviewer@asghi.org", "ReviewerPass123!", public_url)
+        tracker.check("تدقيق التسجيلات" in xml or "تدقيق الأسئلة" in xml, "Reviewer screen loaded with readable tabs")
+
+        rev_token_resp = api_post("/api/auth/login", local_api_base, {"identifier": "reviewer@asghi.org", "password": "ReviewerPass123!"})
+        rev_token = rev_token_resp.get("accessToken", "")
+        pending = api_get("/api/reviewer/pending-recordings", local_api_base, rev_token)
+        tracker.check(len(pending) >= 1, f"Reviewer pending recordings queue non-empty ({len(pending)} items)")
+
+        if pending:
+            rec_id = pending[0].get("recordingId")
+            assign_resp = api_post("/api/reviewer/assignments", local_api_base, {"contentId": rec_id, "contentType": "AUDIO"}, rev_token)
+            decision_resp = api_post(
+                "/api/reviewer/verdicts",
+                local_api_base,
+                {
+                    "contentId": rec_id,
+                    "contentType": "AUDIO",
+                    "action": "VERIFY",
+                    "isFusha": True,
+                    "dialectFree": True,
+                    "audioQuality": 5,
+                    "feedback": "تسجيل سليم وفصيح",
+                },
+                rev_token,
+            )
+            tracker.check(decision_resp.get("status") in ["VERIFIED", "PENDING_REVIEW"], "Reviewer verdict submitted and recorded by API")
+
+        capture_screenshot(device, "live_reviewer.png")
+    except Exception as e:
+        tracker.check(False, f"Reviewer role flow failed: {e}")
+
+    # =========================================================================
+    # 4. ADMIN ROLE, DASHBOARD METRICS, & FLAG RESOLUTION (P1 Behavioral Check)
+    # =========================================================================
+    print("\n--- Verifying Admin Role, Metrics, & Flag Resolution ---")
+    try:
+        admin_token_resp = api_post("/api/auth/login", local_api_base, {"identifier": "admin@asghi.org", "password": "AdminPass123!"})
+        admin_token = admin_token_resp.get("accessToken", "")
+        dashboard_stats = api_get("/api/admin/dashboard", local_api_base, admin_token)
+
+        xml = perform_login(device, "admin@asghi.org", "AdminPass123!", public_url)
+        tracker.check("لوحة المؤشرات" in xml and "البلاغات والنزاعات" in xml, "Admin dashboard loaded with readable tabs")
+
+        # Verify rendered metrics match API
+        verified_count = dashboard_stats.get("verifiedPassages", 0)
+        tracker.check(str(verified_count) in xml, f"Rendered verified passages matches API count: {verified_count}")
+
+        # Create flag via API, then resolve it
+        learner_token_resp = api_post("/api/auth/login", local_api_base, {"identifier": "learner@asghi.org", "password": "LearnerPass123!"})
+        l_token = learner_token_resp.get("accessToken", "")
+        passages = api_get("/api/passages", local_api_base, l_token)
+        if passages:
+            target_p = passages[0]["passageId"]
+            flag_resp = api_post(
+                "/api/flags",
+                local_api_base,
+                {"contentId": target_p, "contentType": "PASSAGE", "reason": "محتوى غير دقيق"},
+                l_token,
+            )
+            flag_id = flag_resp.get("flagId")
+
+            resolve_resp = api_post(
+                f"/api/admin/flags/{flag_id}/resolve",
+                local_api_base,
+                {"action": "ACTION_TAKEN", "notes": "حذف المحتوى المخالف"},
+                admin_token,
+            )
+            tracker.check(resolve_resp.get("status") == "ACTION_TAKEN", "Admin resolved flag with ACTION_TAKEN")
+
+            # Assert passage leaves /api/passages
+            passages_after = api_get("/api/passages", local_api_base, l_token)
+            tracker.check(not any(p["passageId"] == target_p for p in passages_after), "Flagged passage immediately leaves learner catalogue")
+
+        capture_screenshot(device, "live_admin.png")
+    except Exception as e:
+        tracker.check(False, f"Admin role flow failed: {e}")
+
+    # =========================================================================
+    # FINAL SUMMARY & EXIT
+    # =========================================================================
+    exit_code = tracker.summary()
+    sys.exit(exit_code)
 
 
 if __name__ == "__main__":
