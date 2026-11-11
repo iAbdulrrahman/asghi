@@ -1130,36 +1130,39 @@ def resolve_dispute(contentId: UUID, req: ResolveDisputeRequest, user: User = De
     "/api/admin/flags",
     dependencies=[Depends(require_roles(UserRole.ADMIN))],
 )
-def list_flags(user: User = Depends(get_current_user)):
-    """Req 6.7, 10.2 & Seq 5: List all reported content flags."""
+def list_flags(status: Optional[str] = None, user: User = Depends(get_current_user)):
+    """Req 6.7, 10.2 & Seq 5: List reported content flags with optional status filter."""
     flags_data = []
     for p in Passage._registry:
         for f in p.flags:
-            flags_data.append({
-                "flagId": str(f.flagId),
-                "contentId": str(f.contentId),
-                "contentType": "PASSAGE",
-                "reason": f.reason,
-                "status": f.status.value,
-            })
+            if not status or f.status.value == status or status == "ALL":
+                flags_data.append({
+                    "flagId": str(f.flagId),
+                    "contentId": str(f.contentId),
+                    "contentType": "PASSAGE",
+                    "reason": f.reason,
+                    "status": f.status.value,
+                })
         for r in p.audioRecordings:
             for f in r.flags:
-                flags_data.append({
-                    "flagId": str(f.flagId),
-                    "contentId": str(f.contentId),
-                    "contentType": "AUDIO_RECORDING",
-                    "reason": f.reason,
-                    "status": f.status.value,
-                })
+                if not status or f.status.value == status or status == "ALL":
+                    flags_data.append({
+                        "flagId": str(f.flagId),
+                        "contentId": str(f.contentId),
+                        "contentType": "AUDIO_RECORDING",
+                        "reason": f.reason,
+                        "status": f.status.value,
+                    })
         for q in p.questions:
             for f in q.flags:
-                flags_data.append({
-                    "flagId": str(f.flagId),
-                    "contentId": str(f.contentId),
-                    "contentType": "QUESTION",
-                    "reason": f.reason,
-                    "status": f.status.value,
-                })
+                if not status or f.status.value == status or status == "ALL":
+                    flags_data.append({
+                        "flagId": str(f.flagId),
+                        "contentId": str(f.contentId),
+                        "contentType": "QUESTION",
+                        "reason": f.reason,
+                        "status": f.status.value,
+                    })
     return flags_data
 
 
