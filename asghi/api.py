@@ -513,6 +513,9 @@ async def submit_audio(
             attribution=attribution,
             authorId=user.userId,
         )
+        target_p.changeStatus(ContentStatus.PENDING_REVIEW)
+        target_p.claimedBy = None
+        target_p.claimedAt = None
         repo = get_repository()
         repo.save_passage(target_p)
     except Exception:
