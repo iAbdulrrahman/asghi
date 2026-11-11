@@ -6,46 +6,46 @@
 |---|---|---|---|
 | 1 | DONE | `asghi/domain/user.py::User` | `tests/test_domain.py::test_user_roles_and_registration` |
 | 1.1 | DONE | `asghi/domain/enums.py::UserRole`, `asghi/domain/user.py::User.addRole` | `tests/test_domain.py::test_user_roles_and_registration` |
-| 1.2 | DONE | `asghi/domain/user.py::User.register`, `POST /api/auth/register`, `POST /api/auth/login` | `tests/test_auth_api.py::test_register_and_login_email_or_phone`, `tests/test_fix_4_seed_restart.py::test_seed_and_restart_persistence` |
-| 1.3 | DONE | `asghi/domain/user.py::User.completeProfile`, `POST /api/users/profile` | `tests/test_auth_api.py::test_complete_profile` |
+| 1.2 | DONE | `asghi/domain/user.py::User.register`, `POST /api/auth/register`, `POST /api/auth/login`, `mobile/lib/screens/auth/login_screen.dart`, `register_screen.dart` | `tests/test_auth_api.py::test_register_and_login_email_or_phone`, `tests/test_fix_4_seed_restart.py`, `tests/test_live_e2e_integration.py`, `mobile/test/register_screen_test.dart` |
+| 1.3 | DONE | `asghi/domain/user.py::User.completeProfile`, `POST /api/users/profile`, `mobile/lib/screens/auth/register_screen.dart` | `tests/test_auth_api.py::test_complete_profile`, `tests/test_live_e2e_integration.py` |
 | 2 | DONE | `asghi/domain/passage.py::Passage`, `GET /api/passages` | `tests/test_passage_api.py::test_catalogue_maintenance` |
 | 2.1 | DONE | `asghi/domain/passage.py::Passage`, `asghi/domain/audio_recording.py::AudioRecording`, `asghi/domain/question.py::Question` | `tests/test_domain.py::test_passage_structure` |
 | 2.2 | DONE | `asghi/domain/enums.py::Origin`, `asghi/domain/reviewable_content.py::ReviewableContent.origin`, `asghi/repository.py` | `tests/test_domain.py::test_passage_origin_tagging`, `tests/test_fix_3_constraints.py::test_check_author_id_origin_equivalence` |
 | 2.3 | DONE | `asghi/domain/passage.py::Passage.level`, `topic`, `duration` | `tests/test_domain.py::test_passage_metadata` |
 | 3 | DONE | `asghi/domain/ai_engine.py::AIEngine`, `POST /api/admin/generate` | `tests/test_ai_and_review.py::test_ai_generation_and_human_review` |
-| 3.1 | DONE | `asghi/domain/ai_engine.py::AIEngine.generatePassageText`, `generateQuestions` | `tests/test_ai_and_review.py::test_ai_content_generator` |
+| 3.1 | DONE | `asghi/domain/ai_engine.py::AIEngine.generatePassageText`, `generateQuestions`, `mobile/lib/screens/admin/admin_screen.dart` | `tests/test_ai_and_review.py::test_ai_content_generator`, `mobile/test/admin_screen_test.dart` |
 | 3.2 | DONE | `asghi/domain/ai_engine.py::AIEngine.generateQuestions` | `tests/test_ai_and_review.py::test_ai_question_generation_difficulties` |
 | 3.3 | DONE | `asghi/domain/enums.py::ContentStatus.PENDING_REVIEW`, `asghi/domain/ai_engine.py::AIEngine` | `tests/test_ai_and_review.py::test_ai_content_requires_human_review` |
 | 4 | DONE | `asghi/domain/contributor_profile.py::ContributorProfile`, `POST /api/contributor/claim` | `tests/test_contributor_api.py::test_contributor_recording_cycle` |
-| 4.1 | DONE | `asghi/domain/passage.py::Passage.awaitingRecording`, `GET /api/contributor/awaiting-recording`, `POST /api/contributor/claim` | `tests/test_contributor_api.py::test_browse_and_claim_passages`, `tests/test_fix_5_claim_race_and_ttl.py::test_claim_race_concurrent_threads` |
-| 4.2 | DONE | `asghi/domain/contributor_profile.py::ContributorProfile.recordOrUploadAudio`, `POST /api/contributor/submit-audio` | `tests/test_contributor_api.py::test_upload_audio_recording` |
-| 4.3 | DONE | `asghi/domain/contributor_profile.py::ContributorProfile.toggleTashkeel`, `GET /api/passages/{id}/text` | `tests/test_contributor_api.py::test_passage_display_and_tashkeel_toggle` |
-| 4.4 | DONE | `asghi/domain/enums.py::AttributionType`, `asghi/domain/audio_recording.py::AudioRecording.attribution` | `tests/test_contributor_api.py::test_attribution_choice` |
-| 5 | DONE | `asghi/domain/reviewer_profile.py::ReviewerProfile`, `POST /api/reviewer/decision`, `asghi/repository.py::submit_verdict_tx` | `tests/test_review_api.py::test_reviewer_verification_flow`, `tests/test_fix_6_verdict_atomicity.py::test_verdict_atomicity_rollback_on_injected_failure` |
-| 5.1 | DONE | `asghi/domain/reviewer_profile.py::ReviewerProfile.getAudioFile`, `createFeedback`, `submitDecision` | `tests/test_review_api.py::test_reviewer_evaluation` |
-| 5.2 | DONE | `asghi/domain/reviewable_content.py::ReviewableContent.meetsThreshold` | `tests/test_review_api.py::test_specialist_vs_general_reviewers_threshold` |
+| 4.1 | DONE | `asghi/domain/passage.py::Passage.awaitingRecording`, `GET /api/contributor/awaiting-recording`, `POST /api/contributor/claim`, `mobile/lib/screens/contributor/contributor_screen.dart` | `tests/test_contributor_api.py::test_browse_and_claim_passages`, `tests/test_fix_5_claim_race_and_ttl.py`, `tests/test_live_e2e_integration.py`, `mobile/test/contributor_screen_test.dart` |
+| 4.2 | DONE | `asghi/domain/contributor_profile.py::ContributorProfile.recordOrUploadAudio`, `POST /api/contributor/submit-audio`, `mobile/lib/core/audio_recorder_service.dart`, `mobile/lib/screens/contributor/contributor_screen.dart` | `tests/test_contributor_api.py::test_upload_audio_recording`, `tests/test_p1_item_8_acceptance.py`, `tests/test_live_e2e_integration.py`, `mobile/test/contributor_screen_test.dart` |
+| 4.3 | DONE | `asghi/domain/contributor_profile.py::ContributorProfile.toggleTashkeel`, `GET /api/passages/{id}/text`, `mobile/lib/widgets/tashkeel_text_widget.dart` | `tests/test_contributor_api.py::test_passage_display_and_tashkeel_toggle`, `mobile/test/widget_test.dart::TashkeelTextWidget toggles diacritics stripping correctly` |
+| 4.4 | DONE | `asghi/domain/enums.py::AttributionType`, `asghi/domain/audio_recording.py::AudioRecording.attribution`, `mobile/lib/screens/contributor/contributor_screen.dart` | `tests/test_contributor_api.py::test_attribution_choice`, `tests/test_p1_item_8_acceptance.py` |
+| 5 | DONE | `asghi/domain/reviewer_profile.py::ReviewerProfile`, `POST /api/reviewer/decision`, `asghi/repository.py::submit_verdict_tx`, `mobile/lib/screens/reviewer/reviewer_screen.dart` | `tests/test_review_api.py::test_reviewer_verification_flow`, `tests/test_fix_6_verdict_atomicity.py`, `tests/test_live_e2e_integration.py`, `mobile/test/reviewer_screen_test.dart` |
+| 5.1 | DONE | `asghi/domain/reviewer_profile.py::ReviewerProfile.getAudioFile`, `createFeedback`, `submitDecision`, `mobile/lib/core/audio_playback_service.dart`, `mobile/lib/widgets/audio_player_widget.dart`, `mobile/lib/screens/reviewer/reviewer_screen.dart` | `tests/test_review_api.py::test_reviewer_evaluation`, `tests/test_p1_item_8_acceptance.py`, `tests/test_live_e2e_integration.py`, `mobile/test/reviewer_screen_test.dart` |
+| 5.2 | DONE | `asghi/domain/reviewable_content.py::ReviewableContent.meetsThreshold` | `tests/test_review_api.py::test_specialist_vs_general_reviewers_threshold`, `tests/test_live_e2e_integration.py` |
 | 5.3 | DONE | `asghi/domain/reviewer_profile.py::ReviewerProfile.assignReview`, `POST /api/reviewer/assignments` | `tests/test_review_api.py::test_prevent_author_self_review` |
-| 5.4 | DONE | `asghi/domain/admin_profile.py::AdminProfile.resolveDispute`, `POST /api/admin/disputes/{contentId}/resolve` | `tests/test_review_api.py::test_dispute_resolution_policy` |
-| 5.5 | DONE | `asghi/domain/review_feedback.py::ReviewFeedback.isFusha`, `dialectFree` | `tests/test_review_api.py::test_fusha_and_dialect_free_verification` |
-| 6 | DONE | `asghi/domain/learner_profile.py::LearnerProfile`, `asghi/domain/test_session.py::TestSession` | `tests/test_learner_api.py::test_learner_full_practice_session` |
-| 6.1 | DONE | `asghi/domain/passage.py::Passage.browse`, `GET /api/learner/browse`, `POST /api/learner/play` | `tests/test_learner_api.py::test_browse_and_play_verified_audio` |
-| 6.2 | DONE | `asghi/domain/learner_profile.py::LearnerProfile.startSession`, `POST /api/learner/sessions` | `tests/test_learner_api.py::test_start_and_run_listening_test` |
-| 6.3 | DONE | `asghi/domain/passage.py::Passage.getQuestion`, `asghi/domain/enums.py::Difficulty` | `tests/test_domain.py::test_passage_difficulty_tiers` |
-| 6.4 | DONE | `asghi/domain/test_session.py::TestSession.adaptDifficulty` | `tests/test_learner_api.py::test_adaptive_difficulty_progression` |
-| 6.5 | DONE | `asghi/domain/question_response.py::QuestionResponse.evaluate`, `asghi/domain/test_session.py::TestSession.submitAnswer`, `asghi/repository.py::record_answer_tx` | `tests/test_learner_api.py::test_score_responses_and_explanations`, `tests/test_fix_7_transactions.py::test_answer_atomic_transaction_rollback` |
-| 6.6 | DONE | `asghi/domain/learner_progress.py::LearnerProgress.update`, `GET /api/learner/progress` | `tests/test_learner_api.py::test_learner_progress_tracking` |
-| 6.7 | DONE | `asghi/domain/learner_profile.py::LearnerProfile.flagContent`, `POST /api/learner/flag`, `asghi/repository.py::resolve_flag_tx` | `tests/test_flagging_api.py::test_flag_problematic_content`, `tests/test_fix_7_transactions.py::test_flag_resolution_atomic_transaction` |
+| 5.4 | DONE | `asghi/domain/admin_profile.py::AdminProfile.resolveDispute`, `POST /api/admin/disputes/{contentId}/resolve`, `mobile/lib/screens/admin/admin_screen.dart` | `tests/test_review_api.py::test_dispute_resolution_policy`, `tests/test_live_e2e_integration.py`, `mobile/test/admin_screen_test.dart` |
+| 5.5 | DONE | `asghi/domain/review_feedback.py::ReviewFeedback.isFusha`, `dialectFree`, `mobile/lib/screens/reviewer/reviewer_screen.dart` | `tests/test_review_api.py::test_fusha_and_dialect_free_verification`, `tests/test_live_e2e_integration.py` |
+| 6 | DONE | `asghi/domain/learner_profile.py::LearnerProfile`, `asghi/domain/test_session.py::TestSession`, `mobile/lib/screens/learner/practice_screen.dart` | `tests/test_learner_api.py::test_learner_full_practice_session`, `tests/test_live_e2e_integration.py` |
+| 6.1 | DONE | `asghi/domain/passage.py::Passage.browse`, `GET /api/learner/browse`, `POST /api/learner/play`, `mobile/lib/core/audio_playback_service.dart`, `mobile/lib/widgets/audio_player_widget.dart` | `tests/test_learner_api.py::test_browse_and_play_verified_audio`, `mobile/test/audio_playback_test.dart`, `tests/test_live_e2e_integration.py` |
+| 6.2 | DONE | `asghi/domain/learner_profile.py::LearnerProfile.startSession`, `POST /api/learner/sessions`, `mobile/lib/screens/learner/practice_screen.dart` | `tests/test_learner_api.py::test_start_and_run_listening_test`, `tests/test_live_e2e_integration.py` |
+| 6.3 | DONE | `asghi/domain/passage.py::Passage.getQuestion`, `asghi/domain/enums.py::Difficulty`, `mobile/lib/screens/learner/practice_screen.dart` | `tests/test_domain.py::test_passage_difficulty_tiers`, `tests/test_live_e2e_integration.py` |
+| 6.4 | DONE | `asghi/domain/test_session.py::TestSession.adaptDifficulty`, `mobile/lib/screens/learner/practice_screen.dart` | `tests/test_learner_api.py::test_adaptive_difficulty_progression`, `tests/test_live_e2e_integration.py` |
+| 6.5 | DONE | `asghi/domain/question_response.py::QuestionResponse.evaluate`, `asghi/domain/test_session.py::TestSession.submitAnswer`, `asghi/repository.py::record_answer_tx` | `tests/test_learner_api.py::test_score_responses_and_explanations`, `tests/test_fix_7_transactions.py`, `tests/test_live_e2e_integration.py` |
+| 6.6 | DONE | `asghi/domain/learner_progress.py::LearnerProgress.update`, `GET /api/learner/progress`, `mobile/lib/screens/learner/progress_screen.dart` | `tests/test_learner_api.py::test_learner_progress_tracking`, `mobile/test/progress_screen_test.dart`, `tests/test_live_e2e_integration.py` |
+| 6.7 | DONE | `asghi/domain/learner_profile.py::LearnerProfile.flagContent`, `POST /api/learner/flag`, `asghi/repository.py::resolve_flag_tx`, `mobile/lib/screens/admin/admin_screen.dart` | `tests/test_flagging_api.py::test_flag_problematic_content`, `tests/test_fix_7_transactions.py`, `tests/test_live_e2e_integration.py`, `mobile/test/admin_screen_test.dart` |
 | 6.8 | OUT-OF-SCOPE | Offline local database sync marked OUT-OF-SCOPE per specification definition of done; API offline package manifest provided at `GET /api/passages/{id}/offline-package` | `tests/test_learner_api.py::test_offline_package_endpoint` |
 | 7 | DONE | `asghi/domain/question_author.py::QuestionAuthor`, `POST /api/questions` | `tests/test_question_authoring.py::test_question_authoring_all_roles` |
 | 7.1 | DONE | `ContributorProfile.authorQuestion`, `ReviewerProfile.authorQuestion`, `AdminProfile.authorQuestion` | `tests/test_question_authoring.py::test_author_question_roles` |
 | 7.2 | DONE | `AIEngine.generateQuestions`, `QuestionAuthor.generateQuestions` | `tests/test_question_authoring.py::test_balanced_difficulty_generation` |
-| 7.3 | DONE | `asghi/domain/passage.py::Passage.getQuestion`, `POST /api/reviewer/questions/{id}/review` | `tests/test_fix_9_verified_questions.py::test_unverified_question_never_served` |
-| 8 | DONE | `asghi/domain/reviewable_content.py::ReviewableContent.reject`, `GET /api/contributor/submissions` | `tests/test_contributor_api.py::test_rejection_explanation_visible_to_contributor` |
-| 9 | DONE | `asghi/domain/test_session.py::TestSession.submitAnswer`, `asghi/domain/question.py::Question.explanation` | `tests/test_learner_api.py::test_actionable_feedback_on_wrong_answer` |
-| 10 | DONE | `asghi/domain/admin_profile.py::AdminProfile`, `/api/admin/*` | `tests/test_admin_api.py::test_admin_governance_and_moderation` |
+| 7.3 | DONE | `asghi/domain/passage.py::Passage.getQuestion`, `POST /api/reviewer/questions/{id}/review`, `mobile/lib/screens/reviewer/reviewer_screen.dart` | `tests/test_fix_9_verified_questions.py::test_unverified_question_never_served`, `mobile/test/reviewer_screen_test.dart` |
+| 8 | DONE | `asghi/domain/reviewable_content.py::ReviewableContent.reject`, `GET /api/contributor/submissions`, `mobile/lib/screens/contributor/contributor_screen.dart` | `tests/test_contributor_api.py::test_rejection_explanation_visible_to_contributor`, `mobile/test/contributor_screen_test.dart` |
+| 9 | DONE | `asghi/domain/test_session.py::TestSession.submitAnswer`, `asghi/domain/question.py::Question.explanation`, `mobile/lib/screens/learner/practice_screen.dart` | `tests/test_learner_api.py::test_actionable_feedback_on_wrong_answer`, `tests/test_live_e2e_integration.py` |
+| 10 | DONE | `asghi/domain/admin_profile.py::AdminProfile`, `/api/admin/*`, `mobile/lib/screens/admin/admin_screen.dart` | `tests/test_admin_api.py::test_admin_governance_and_moderation`, `tests/test_live_e2e_integration.py` |
 | 10.1 | DONE | `asghi/domain/reputation.py::Reputation`, `GET /api/users/{id}/reputation` | `tests/test_admin_api.py::test_contributor_and_reviewer_reputation` |
-| 10.2 | DONE | `asghi/domain/admin_profile.py::AdminProfile`, `GET /api/admin/dashboard`, `GET /api/admin/report` | `tests/test_admin_api.py::test_admin_dashboard_and_reporting` |
-| 11 | DONE | Native Flutter Mobile Client (`mobile/lib/main.dart`, `mobile/lib/screens/home_screen.dart`) & responsive viewport in `asghi/static/index.html` | `mobile/test/widget_test.dart::Full learner practice session`, `tests/test_nfr.py::test_nfr11_mobile_responsive_contract` |
+| 10.2 | DONE | `asghi/domain/admin_profile.py::AdminProfile`, `GET /api/admin/dashboard`, `GET /api/admin/report`, `mobile/lib/screens/admin/admin_screen.dart` | `tests/test_admin_api.py::test_admin_dashboard_and_reporting`, `tests/test_live_e2e_integration.py`, `mobile/test/admin_screen_test.dart` |
+| 11 | DONE | Native Flutter Mobile Client (`mobile/lib/main.dart`, `mobile/lib/screens/*`, `mobile/docs/FLOWS.md`, `mobile/docs/flow_{1..5}.png`) & responsive viewport in `asghi/static/index.html` | `mobile/test/widget_test.dart`, `mobile/test/golden_flows_test.dart`, `tests/test_live_e2e_integration.py`, `tests/test_nfr.py::test_nfr11_mobile_responsive_contract` |
 | 12 | PARTIAL | Size validation enforces 25 MB ceiling in `validate_audio_metadata`; full 25 MB streaming load unbenchmarked | `tests/test_nfr.py::test_nfr12_audio_upload_25mb_contract` |
 | 13 | PARTIAL | Single endpoint responds in <50ms locally; 95th percentile under concurrent load unbenchmarked | `tests/test_nfr.py::test_nfr13_screen_load_performance` |
 | 14 | PARTIAL | Non-blocking async endpoints proven in unit suite; high-concurrency production benchmarking pending | `tests/test_nfr.py::test_nfr14_concurrent_capacity` |
@@ -60,8 +60,8 @@
 | 18 | PARTIAL | Fusha and content heuristics verified on sample strings; full dialect NLP dictionary integration pending | `tests/test_nfr.py::test_nfr18_fusha_and_content_guidelines` |
 | 18.1 | DONE | Strict Fusha verification rules in reviewer feedback and automated checker reject dialectal keywords | `tests/test_nfr.py::test_nfr18_1_fusha_verification` |
 | 18.2 | DONE | Content moderation filter actively blocks vulgar and non-halal keywords | `tests/test_nfr.py::test_nfr18_2_halal_content_filter` |
-| 19 | DONE | Audio recordings validated and tagged for 1–3 minutes (60–180s) primary target format | `tests/test_nfr.py::test_nfr19_audio_duration_rules` |
-| 20 | DONE | Arabic-first interface with full RTL layout (`mobile/lib/main.dart` with `Locale('ar')` & `asghi/static/index.html` with `dir="rtl" lang="ar"`) | `mobile/test/widget_test.dart::TashkeelTextWidget toggles diacritics stripping correctly`, `tests/test_nfr.py::test_nfr20_arabic_rtl_ui` |
+| 19 | DONE | Audio recordings validated and tagged for 1–3 minutes (60–180s) primary target format | `tests/test_nfr.py::test_nfr19_audio_duration_rules`, `tests/test_live_e2e_integration.py` |
+| 20 | DONE | Arabic-first interface with full RTL layout (`mobile/lib/main.dart` with `Locale('ar')`, `mobile/docs/FLOWS.md`, `asghi/static/index.html` with `dir="rtl" lang="ar"`) | `mobile/test/widget_test.dart`, `mobile/test/golden_flows_test.dart`, `tests/test_nfr.py::test_nfr20_arabic_rtl_ui` |
 | 21 | PARTIAL | Contributor compensation ledger and credit calculation tested; automated banking/payout integration pending | `tests/test_nfr.py::test_nfr21_compensation_model` |
 
 ## (b) Implementation -> Requirement Mapping
@@ -98,34 +98,43 @@
 | `GET /api/contributor/awaiting-recording` | Req 4.1 |
 | `POST /api/contributor/claim` | Req 4.1 |
 | `POST /api/contributor/submit-audio` | Req 4.2, 4.4, 12, 19 |
+| `GET /api/contributor/submissions` | Req 8 |
 | `GET /api/reviewer/pending-recordings` | Req 5.1 |
+| `GET /api/reviewer/pending-questions` | Req 7.3 |
 | `POST /api/reviewer/assignments` | Req 5.1, 5.3 |
 | `POST /api/reviewer/decision` | Req 5.1, 5.2, 5.5, 8 |
+| `POST /api/reviewer/questions/{id}/review` | Req 7.3 |
 | `POST /api/learner/sessions` | Req 6.2 |
+| `GET /api/learner/sessions/{id}/question` | Req 6.3 |
 | `POST /api/learner/sessions/{id}/answer` | Req 6.4, 6.5, 9 |
 | `POST /api/learner/sessions/{id}/finish` | Req 6.6 |
+| `GET /api/learner/progress` | Req 6.6 |
 | `POST /api/learner/flag` | Req 6.7 |
 | `GET /api/passages/{id}/offline-package` | Req 6.8 |
 | `POST /api/questions` | Req 7.1, 7.3 |
 | `POST /api/admin/generate` | Req 3.1, 3.2, 7.2, 10.2 |
 | `POST /api/admin/disputes/{contentId}/resolve` | Req 5.4, 10.2 |
 | `POST /api/admin/flags/{flagId}/resolve` | Req 6.7, 10.2 |
+| `GET /api/admin/flags` | Req 6.7, 10.2 |
 | `GET /api/admin/dashboard` | Req 10.2 |
 | `GET /api/admin/report` | Req 10.2 |
 | `GET /healthz` | Req 15 |
+| `GET /api/audio/{filename}` | Req 5.1, 6.1 |
 | `GET /` (Arabic-first Web UI) | Req 11, 13, 17.1, 17.2, 20 |
 | `mobile/lib/main.dart` | Req 11, 20 |
 | `mobile/lib/core/theme.dart` | Req 11, 17.1, 20 |
 | `mobile/lib/core/api_client.dart` | Req 1.2, 11 |
-| `mobile/lib/screens/login_screen.dart` | Req 1.2, 11, 17.1 |
-| `mobile/lib/screens/register_screen.dart` | Req 1.2, 1.3, 11 |
+| `mobile/lib/core/audio_recorder_service.dart` | Req 4.2, 11 |
+| `mobile/lib/core/audio_playback_service.dart` | Req 5.1, 6.1, 11 |
+| `mobile/lib/screens/auth/login_screen.dart` | Req 1.2, 11, 17.1 |
+| `mobile/lib/screens/auth/register_screen.dart` | Req 1.2, 1.3, 11 |
 | `mobile/lib/screens/home_screen.dart` | Req 1.1, 11, 20 |
-| `mobile/lib/screens/catalogue_screen.dart` | Req 2.3, 6.1, 11 |
-| `mobile/lib/screens/practice_screen.dart` | Req 6.1, 6.2, 6.3, 6.4, 6.5, 9, 11 |
-| `mobile/lib/screens/progress_screen.dart` | Req 6.6, 11 |
-| `mobile/lib/screens/contributor_screen.dart` | Req 4.1, 4.2, 4.3, 4.4, 11 |
-| `mobile/lib/screens/reviewer_screen.dart` | Req 5.1, 5.2, 5.5, 11, 18.1 |
-| `mobile/lib/screens/admin_screen.dart` | Req 3.1, 5.4, 6.7, 10.2, 11 |
-| `mobile/lib/widgets/audio_player_widget.dart` | Req 6.1, 11 |
+| `mobile/lib/screens/learner/practice_screen.dart` | Req 6.1, 6.2, 6.3, 6.4, 6.5, 9, 11 |
+| `mobile/lib/screens/learner/progress_screen.dart` | Req 6.6, 11 |
+| `mobile/lib/screens/contributor/contributor_screen.dart` | Req 4.1, 4.2, 4.3, 4.4, 8, 11 |
+| `mobile/lib/screens/reviewer/reviewer_screen.dart` | Req 5.1, 5.2, 5.5, 7.3, 11, 18.1 |
+| `mobile/lib/screens/admin/admin_screen.dart` | Req 3.1, 5.4, 6.7, 10.2, 11 |
+| `mobile/lib/widgets/audio_player_widget.dart` | Req 5.1, 6.1, 11 |
 | `mobile/lib/widgets/tashkeel_text_widget.dart` | Req 4.3, 11, 20 |
-
+| `mobile/docs/FLOWS.md` | Req 11, 20 |
+| `tests/test_live_e2e_integration.py` | Req 1.2, 1.3, 4.1, 4.2, 5.1, 5.2, 5.4, 5.5, 6.1, 6.2, 6.3, 6.4, 6.5, 6.6, 6.7, 7.1, 10.2, 11, 12, 19, 20 |

@@ -31,7 +31,7 @@ def seed_database(db_path: str = "asghi.db"):
     User._registry.clear()
     Passage._registry.clear()
 
-    # 1. Create a dummy MP3 sample for local testing
+    # 1. Create a sample MP3 for local testing
     sample_audio_filename = "sample_fusha_01.mp3"
     sample_audio_path = os.path.join(UPLOAD_DIR, sample_audio_filename)
     if not os.path.exists(sample_audio_path):
