@@ -118,22 +118,22 @@ class _AudioPlayerWidgetState extends ConsumerState<AudioPlayerWidget> {
               ],
             ),
             const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+            Wrap(
+              alignment: WrapAlignment.center,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 8,
+              runSpacing: 4,
               children: [
                 const Text('سرعة الصوت: ', style: TextStyle(fontSize: 13)),
-                Wrap(
-                  spacing: 8,
-                  children: [0.75, 1.0, 1.25, 1.5].map((s) {
-                    final isSelected = (_currentSpeed - s).abs() < 0.01;
-                    return ChoiceChip(
-                      label: Text('${s}x'),
-                      selected: isSelected,
-                      selectedColor: AppConstants.accentGold,
-                      onSelected: (_) => _setSpeed(s),
-                    );
-                  }).toList(),
-                ),
+                ...[0.75, 1.0, 1.25, 1.5].map((s) {
+                  final isSelected = (_currentSpeed - s).abs() < 0.01;
+                  return ChoiceChip(
+                    label: Text('${s}x'),
+                    selected: isSelected,
+                    selectedColor: AppConstants.accentGold,
+                    onSelected: (_) => _setSpeed(s),
+                  );
+                }),
               ],
             ),
           ],
