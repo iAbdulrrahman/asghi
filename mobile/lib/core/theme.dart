@@ -37,6 +37,23 @@ class AppTheme {
           color: Colors.white,
         ),
       ),
+      tabBarTheme: TabBarThemeData(
+        labelColor: Colors.white,
+        unselectedLabelColor: Colors.white70,
+        indicatorColor: AppConstants.accentGold,
+        indicatorSize: TabBarIndicatorSize.tab,
+        labelStyle: const TextStyle(
+          fontFamily: fontFamily,
+          fontSize: 14,
+          fontWeight: FontWeight.bold,
+          color: Colors.white,
+        ),
+        unselectedLabelStyle: const TextStyle(
+          fontFamily: fontFamily,
+          fontSize: 14,
+          color: Colors.white70,
+        ),
+      ),
       cardTheme: CardThemeData(
         color: AppConstants.surfaceLight,
         elevation: 1,

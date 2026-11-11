@@ -182,14 +182,21 @@ class _AdminScreenState extends ConsumerState<AdminScreen> with SingleTickerProv
     return Scaffold(
       appBar: AppBar(
         title: const Text('لوحة تحكم المشرف (Admin)'),
-        bottom: TabBar(
-          controller: _tabController,
-          tabs: const [
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(48),
+          child: TabBar(
+            controller: _tabController,
+            labelColor: Colors.white,
+            unselectedLabelColor: Colors.white70,
+            indicatorColor: AppConstants.accentGold,
+            indicatorWeight: 3,
+            tabs: const [
             Tab(text: 'لوحة المؤشرات', icon: Icon(Icons.dashboard)),
             Tab(text: 'البلاغات والنزاعات', icon: Icon(Icons.shield)),
             Tab(text: 'توليد المحتوى', icon: Icon(Icons.auto_awesome)),
           ],
         ),
+          ),
         actions: [
           IconButton(icon: const Icon(Icons.refresh), onPressed: _loadAllAdminData),
         ],
