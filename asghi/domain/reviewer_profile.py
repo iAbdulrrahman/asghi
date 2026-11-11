@@ -43,18 +43,23 @@ class ReviewerProfile(UserRoleProfile, QuestionAuthor):
         """Sequence 2 steps 15-24: Assign review, preventing author self-review."""
         # Find content
         content: Optional[ReviewableContent] = None
-        for p in Passage._registry:
-            if p.contentId == contentId:
-                content = p
+        for item in ReviewableContent._registry:
+            if item.contentId == contentId:
+                content = item
                 break
-            for rec in p.audioRecordings:
-                if rec.contentId == contentId:
-                    content = rec
+        if not content:
+            for p in Passage._registry:
+                if p.contentId == contentId:
+                    content = p
                     break
-            for q in p.questions:
-                if q.contentId == contentId:
-                    content = q
-                    break
+                for rec in p.audioRecordings:
+                    if rec.contentId == contentId:
+                        content = rec
+                        break
+                for q in p.questions:
+                    if q.contentId == contentId:
+                        content = q
+                        break
 
         if content and content.authorId == self.userRoleProfileId:
             raise PermissionError("Reviewer cannot review their own submission (Sequence 2 break / Req 5.3)")
@@ -112,6 +117,11 @@ class ReviewerProfile(UserRoleProfile, QuestionAuthor):
         # Locate content and passage
         content: Optional[ReviewableContent] = None
         parent_passage: Optional[Passage] = None
+        for item in ReviewableContent._registry:
+            if item.contentId == assignment.contentId:
+                content = item
+                break
+
         for p in Passage._registry:
             if p.contentId == assignment.contentId:
                 content = p
@@ -127,6 +137,7 @@ class ReviewerProfile(UserRoleProfile, QuestionAuthor):
                     content = q
                     parent_passage = p
                     break
+
 
         if not content:
             return

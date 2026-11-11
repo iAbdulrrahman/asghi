@@ -1,0 +1,985 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>اصغِ | منصة التدريب على الاستماع العربي الفصيح</title>
+    <style>
+        :root {
+            --primary: #106b52;
+            --primary-hover: #0a4f3c;
+            --secondary: #d97706;
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #475569;
+            --border: #e2e8f0;
+            --success: #15803d;
+            --danger: #b91c1c;
+            --warning: #b45309;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            direction: rtl;
+            text-align: right;
+            line-height: 1.6;
+            padding-bottom: 60px;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--primary), #064e3b);
+            color: white;
+            padding: 1.25rem 1rem;
+            text-align: center;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        header h1 {
+            font-size: 1.8rem;
+            margin-bottom: 0.25rem;
+        }
+
+        header p {
+            font-size: 0.95rem;
+            opacity: 0.9;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 1.5rem auto;
+            padding: 0 1rem;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 1.25rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--border);
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+        }
+
+        .tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.25rem;
+            overflow-x: auto;
+            padding-bottom: 0.5rem;
+        }
+
+        .tab-btn {
+            background: #e2e8f0;
+            color: var(--text-main);
+            border: none;
+            padding: 0.6rem 1.2rem;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s ease;
+        }
+
+        .tab-btn.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.6rem 1.2rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: background-color 0.2s;
+            display: inline-block;
+            text-align: center;
+        }
+
+        .btn:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--primary);
+            color: var(--primary);
+        }
+
+        .btn-outline:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-danger {
+            background-color: var(--danger);
+        }
+
+        .btn-secondary {
+            background-color: var(--secondary);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.6rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            margin-left: 0.5rem;
+        }
+
+        .badge-green { background: #dcfce7; color: #166534; }
+        .badge-amber { background: #fef3c7; color: #92400e; }
+        .badge-red { background: #fee2e2; color: #991b1b; }
+        .badge-blue { background: #dbeafe; color: #1e40af; }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 0.65rem 0.75rem;
+            margin-top: 0.35rem;
+            margin-bottom: 1rem;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 1rem;
+            direction: rtl;
+        }
+
+        label {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        .auth-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            background: #ecfdf5;
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            border: 1px solid #a7f3d0;
+        }
+
+        .audio-player-box {
+            background: #f1f5f9;
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .passage-text {
+            font-size: 1.25rem;
+            line-height: 2;
+            padding: 1rem;
+            background: #fff;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            margin: 1rem 0;
+        }
+
+        .options-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            margin: 1rem 0;
+        }
+
+        .option-item {
+            padding: 0.75rem 1rem;
+            background: #f8fafc;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .option-item:hover {
+            border-color: var(--primary);
+            background: #ecfdf5;
+        }
+
+        .option-item.selected {
+            border-color: var(--primary);
+            background: #d1fae5;
+            font-weight: 700;
+        }
+
+        .feedback-box {
+            margin-top: 1rem;
+            padding: 1rem;
+            border-radius: 8px;
+        }
+        .feedback-box.correct { background: #dcfce7; border: 1px solid #86efac; color: #166534; }
+        .feedback-box.wrong { background: #fee2e2; border: 1px solid #fca5a5; color: #991b1b; }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        @media (max-width: 640px) {
+            .grid-2 { grid-template-columns: 1fr; }
+            header h1 { font-size: 1.4rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>اصغِ (Asghi)</h1>
+        <p>المنصة التعاونية للتدريب على الاستماع باللغة العربية الفصحى</p>
+    </header>
+
+    <div class="container">
+        <!-- Auth bar & quick role switcher -->
+        <div class="auth-bar" id="authBar">
+            <div>
+                <span id="userStatus">غير مسجل الدخول</span>
+                <span id="roleBadge" class="badge badge-green" style="display:none;"></span>
+            </div>
+            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                <button class="btn btn-outline" onclick="quickLogin('learner@asghi.org')">دخول كمتعلم</button>
+                <button class="btn btn-outline" onclick="quickLogin('contributor@asghi.org')">دخول كمساهم</button>
+                <button class="btn btn-outline" onclick="quickLogin('reviewer@asghi.org')">دخول كمراجع</button>
+                <button class="btn btn-outline" onclick="quickLogin('admin@asghi.org')">دخول كمدير</button>
+            </div>
+        </div>
+
+        <!-- Role Tabs -->
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('learner')">ممارسة الاستماع (متعلم)</button>
+            <button class="tab-btn" onclick="switchTab('contributor')">تسجيل ونشر الصوت (مساهم)</button>
+            <button class="tab-btn" onclick="switchTab('reviewer')">تدقيق ومراجعة الفصحى (مراجع)</button>
+            <button class="tab-btn" onclick="switchTab('admin')">لوحة الإدارة والذكاء الاصطناعي (مدير)</button>
+        </div>
+
+        <!-- LEARNER VIEW -->
+        <div id="learnerView" class="tab-content">
+            <div class="card">
+                <h2>نصوص الاستماع المتاحة بالفصحى</h2>
+                <p style="color: var(--text-muted); margin-bottom: 1rem;">اختر نصاً للاستماع إليه وخوض اختبار الفهم الاستيعابي المتكيف.</p>
+                <div id="passagesList">جارٍ التحميل...</div>
+            </div>
+
+            <!-- Active Practice Session Card -->
+            <div id="practiceCard" class="card" style="display:none;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <h3 id="sessionPassageTopic">جلسة الاستماع</h3>
+                    <button class="btn btn-danger" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;" onclick="flagCurrentContent()">إبلاغ عن مشكلة</button>
+                </div>
+
+                <div class="passage-text" id="sessionPassageText"></div>
+
+                <div class="audio-player-box">
+                    <label>التحكم في سرعة التسجيل الصوتي:</label>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <button class="btn btn-outline" onclick="setSpeed(0.75)">0.75x</button>
+                        <button class="btn btn-outline" onclick="setSpeed(1.0)">1.0x (طبيعي)</button>
+                        <button class="btn btn-outline" onclick="setSpeed(1.25)">1.25x</button>
+                        <button class="btn btn-outline" onclick="setSpeed(1.5)">1.5x</button>
+                    </div>
+                </div>
+
+                <div id="questionContainer">
+                    <h4 id="questionPrompt" style="margin-top: 1rem;"></h4>
+                    <span id="questionDiffBadge" class="badge badge-amber"></span>
+                    <div class="options-list" id="optionsList"></div>
+                    <button id="btnSubmitAnswer" class="btn" onclick="submitCurrentAnswer()">إرسال الإجابة</button>
+                    <div id="answerFeedback" style="display:none;"></div>
+                    <button id="btnNextQuestion" class="btn btn-secondary" style="display:none; margin-top: 1rem;" onclick="loadNextQuestion()">السؤال التالي</button>
+                </div>
+            </div>
+
+            <!-- Learner Progress Card -->
+            <div class="card">
+                <h3>سجل التقدم والنتائج (Req 6.6)</h3>
+                <div class="grid-2" style="margin-top: 1rem;">
+                    <div style="background: #f1f5f9; padding: 1rem; border-radius: 8px;">
+                        <label>مجموع النقاط المكتسبة:</label>
+                        <h2 id="learnerTotalScore" style="color: var(--primary);">0</h2>
+                    </div>
+                    <div style="background: #f1f5f9; padding: 1rem; border-radius: 8px;">
+                        <label>وقت الاستماع التراكمي (ثوانٍ):</label>
+                        <h2 id="learnerTotalTime" style="color: var(--secondary);">0</h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CONTRIBUTOR VIEW -->
+        <div id="contributorView" class="tab-content" style="display:none;">
+            <div class="card">
+                <h2>نصوص تنتظر التسجيل الصوتي (Req 4.1)</h2>
+                <div id="awaitingRecordingsList">جارٍ التحميل...</div>
+            </div>
+
+            <!-- Recording Studio -->
+            <div id="recordingStudio" class="card" style="display:none;">
+                <h3>استوديو التسجيل ورفع الصوت</h3>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem;">
+                    <span>النص المطلوب تسجيله:</span>
+                    <button class="btn btn-outline" style="padding: 0.3rem 0.7rem;" onclick="toggleTashkeelView()">إظهار / إخفاء التشكيل (Req 4.3)</button>
+                </div>
+                <div class="passage-text" id="recordingPassageText"></div>
+
+                <form id="uploadAudioForm" onsubmit="handleAudioUpload(event)">
+                    <label>نوع النسبة (Req 4.4):</label>
+                    <select id="attributionType">
+                        <option value="SHOW_NAME">إظهار اسمي علناً كقارئ مساهم</option>
+                        <option value="ANONYMOUS">تسجيل مجهول الهوية (لحماية الخصوصية)</option>
+                    </select>
+
+                    <label>رفع ملف صوتي (MP3/WAV حتى 25 ميغابايت - NFR 12):</label>
+                    <input type="file" id="audioFileInput" accept="audio/*" required>
+
+                    <button type="submit" class="btn" style="margin-top: 1rem;">إرسال التسجيل للمراجعة</button>
+                </form>
+            </div>
+
+            <div class="card">
+                <h3>تسجيلاتي السابقة وحالات الرفض/القبول (Req 8)</h3>
+                <div id="mySubmissionsList">جارٍ التحميل...</div>
+            </div>
+        </div>
+
+        <!-- REVIEWER VIEW -->
+        <div id="reviewerView" class="tab-content" style="display:none;">
+            <div class="card">
+                <h2>التسجيلات الصوتية قيد المراجعة والتدقيق (Req 5.1)</h2>
+                <div id="pendingRecordingsList">جارٍ التحميل...</div>
+            </div>
+
+            <div id="evaluationFormCard" class="card" style="display:none;">
+                <h3>نموذج تقييم فصاحة التسجيل (Req 5.5)</h3>
+                <p id="evalRecordingInfo" style="margin-bottom: 1rem; color: var(--text-muted);"></p>
+
+                <div style="margin-bottom: 1rem;">
+                    <label>
+                        <input type="checkbox" id="checkFusha" checked style="width: auto; margin-left: 0.5rem;">
+                        التسجيل باللغة العربية الفصحى السليمة
+                    </label>
+                </div>
+
+                <div style="margin-bottom: 1rem;">
+                    <label>
+                        <input type="checkbox" id="checkDialectFree" checked style="width: auto; margin-left: 0.5rem;">
+                        التسجيل خالٍ تماماً من المفردات والنطق العامي
+                    </label>
+                </div>
+
+                <label>جودة الصوت ونقاء التسجيل (1 إلى 5):</label>
+                <select id="audioQuality">
+                    <option value="5">5 - ممتاز جداً وخالٍ من الضوضاء</option>
+                    <option value="4">4 - جيد جداً</option>
+                    <option value="3">3 - مقبول</option>
+                    <option value="2">2 - رديء</option>
+                    <option value="1">1 - غير صالح</option>
+                </select>
+
+                <label>ملاحظات وتوجيهات للمساهم (Req 8):</label>
+                <textarea id="reviewReason" rows="3" placeholder="اكتب أسباب القبول أو أسباب الرفض بوضوح..."></textarea>
+
+                <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                    <button class="btn" onclick="submitDecision(true)">اعتماد التسجيل (قبول)</button>
+                    <button class="btn btn-danger" onclick="submitDecision(false)">رفض التسجيل مع إبداء السبب</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ADMIN VIEW -->
+        <div id="adminView" class="tab-content" style="display:none;">
+            <div class="card">
+                <h2>إدارة وتوليد المحتوى بالذكاء الاصطناعي (Req 3.1, 3.2, 10.2)</h2>
+                <p style="color: var(--text-muted); margin-bottom: 1rem;">توليد نصوص وأسئلة متدرجة الصعوبة وإخضاعها للتحكيم البشري قبل النشر.</p>
+
+                <button class="btn btn-secondary" onclick="triggerAiGeneration()">توليد محتوى جديد بواسطة الذكاء الاصطناعي</button>
+            </div>
+
+            <div class="card">
+                <h3>البلاغات والاعتراضات اللغوية (Req 6.7, 10.2)</h3>
+                <div id="adminFlagsList">جارٍ تحميل البلاغات...</div>
+            </div>
+
+            <div class="card">
+                <h3>تقرير أداء المنصة الشامل (Req 10.2)</h3>
+                <div id="adminReportData">جارٍ التحميل...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentToken = null;
+        let currentUser = null;
+        let currentSessionId = null;
+        let currentQuestion = null;
+        let selectedAnswer = null;
+        let currentClaimPassageId = null;
+        let isTashkeelVisible = true;
+        let rawPassageText = "";
+        let currentAssignmentId = null;
+
+        const API_BASE = "/api";
+
+        async function quickLogin(email) {
+            try {
+                const res = await fetch(`${API_BASE}/auth/login`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({emailOrPhone: email, password: email === 'admin@asghi.org' ? 'AdminPass123!' : (email.includes('reviewer') ? 'ReviewerPass123!' : (email.includes('contributor') ? 'ContributorPass123!' : 'LearnerPass123!'))})
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    currentToken = data.token;
+                    currentUser = data;
+                    document.getElementById('userStatus').innerText = `مرحباً، ${data.displayName || email}`;
+                    document.getElementById('roleBadge').style.display = 'inline-block';
+                    document.getElementById('roleBadge').innerText = data.roles.join(', ');
+                    loadLearnerPassages();
+                    loadLearnerProgress();
+                    loadAwaitingRecordings();
+                    loadContributorSubmissions();
+                    loadPendingRecordings();
+                    loadAdminData();
+                } else {
+                    alert(data.detail || "فشل تسجيل الدخول");
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
+
+            if (tab === 'learner') {
+                document.getElementById('learnerView').style.display = 'block';
+                document.querySelectorAll('.tab-btn')[0].classList.add('active');
+            } else if (tab === 'contributor') {
+                document.getElementById('contributorView').style.display = 'block';
+                document.querySelectorAll('.tab-btn')[1].classList.add('active');
+            } else if (tab === 'reviewer') {
+                document.getElementById('reviewerView').style.display = 'block';
+                document.querySelectorAll('.tab-btn')[2].classList.add('active');
+            } else if (tab === 'admin') {
+                document.getElementById('adminView').style.display = 'block';
+                document.querySelectorAll('.tab-btn')[3].classList.add('active');
+            }
+        }
+
+        async function loadLearnerPassages() {
+            try {
+                const res = await fetch(`${API_BASE}/passages`);
+                const data = await res.json();
+                const container = document.getElementById('passagesList');
+                container.innerHTML = '';
+
+                data.forEach(p => {
+                    const div = document.createElement('div');
+                    div.style.cssText = "padding: 1rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;";
+                    div.innerHTML = `
+                        <div>
+                            <h4>${p.topic} <span class="badge badge-green">${p.level}</span> <span class="badge badge-blue">${p.origin}</span></h4>
+                            <p style="font-size: 0.9rem; color: var(--text-muted);">${p.text.substring(0, 80)}...</p>
+                        </div>
+                        <button class="btn" onclick="startPracticeSession('${p.passageId}', '${p.topic}', '${escape(p.text)}')">بدء التدريب</button>
+                    `;
+                    container.appendChild(div);
+                });
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function startPracticeSession(passageId, topic, textEscaped) {
+            if (!currentToken) {
+                await quickLogin('learner@asghi.org');
+            }
+            try {
+                const res = await fetch(`${API_BASE}/learner/sessions`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${currentToken}`
+                    },
+                    body: JSON.stringify({passageId: passageId})
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    currentSessionId = data.sessionId;
+                    document.getElementById('practiceCard').style.display = 'block';
+                    document.getElementById('sessionPassageTopic').innerText = topic;
+                    document.getElementById('sessionPassageText').innerText = unescape(textEscaped);
+                    loadNextQuestion();
+                } else {
+                    alert(data.detail || "تعذر بدء الجلسة");
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function loadNextQuestion() {
+            document.getElementById('answerFeedback').style.display = 'none';
+            document.getElementById('btnNextQuestion').style.display = 'none';
+            document.getElementById('btnSubmitAnswer').style.display = 'inline-block';
+            selectedAnswer = null;
+
+            try {
+                const res = await fetch(`${API_BASE}/learner/sessions/${currentSessionId}/question`, {
+                    headers: {'Authorization': `Bearer ${currentToken}`}
+                });
+                const data = await res.json();
+                if (data.done) {
+                    alert("أحسنت! أكملت جميع أسئلة هذا النص.");
+                    finishPracticeSession();
+                    return;
+                }
+                currentQuestion = data;
+                document.getElementById('questionPrompt').innerText = data.promptText;
+                document.getElementById('questionDiffBadge').innerText = `المستوى: ${data.difficulty}`;
+                const optionsDiv = document.getElementById('optionsList');
+                optionsDiv.innerHTML = '';
+
+                data.answers.forEach(ans => {
+                    const opt = document.createElement('div');
+                    opt.className = 'option-item';
+                    opt.innerText = ans;
+                    opt.onclick = () => {
+                        document.querySelectorAll('.option-item').forEach(o => o.classList.remove('selected'));
+                        opt.classList.add('selected');
+                        selectedAnswer = ans;
+                    };
+                    optionsDiv.appendChild(opt);
+                });
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function submitCurrentAnswer() {
+            if (!selectedAnswer) {
+                alert("يرجى اختيار إجابة أولاً");
+                return;
+            }
+            try {
+                const res = await fetch(`${API_BASE}/learner/sessions/${currentSessionId}/answer`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${currentToken}`
+                    },
+                    body: JSON.stringify({questionId: currentQuestion.questionId, answer: selectedAnswer})
+                });
+                const data = await res.json();
+                const fb = document.getElementById('answerFeedback');
+                fb.style.display = 'block';
+                if (data.isCorrect) {
+                    fb.className = 'feedback-box correct';
+                    fb.innerHTML = `<strong>إجابة صحيحة! (+20 نقطة)</strong><p>${data.explanation}</p>`;
+                } else {
+                    fb.className = 'feedback-box wrong';
+                    fb.innerHTML = `<strong>إجابة خاطئة.</strong> الإجابة الصحيحة هي: <u>${data.correctAnswer}</u><p>${data.explanation}</p>`;
+                }
+                document.getElementById('btnSubmitAnswer').style.display = 'none';
+                document.getElementById('btnNextQuestion').style.display = 'inline-block';
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function finishPracticeSession() {
+            try {
+                const res = await fetch(`${API_BASE}/learner/sessions/${currentSessionId}/finish`, {
+                    method: 'POST',
+                    headers: {'Authorization': `Bearer ${currentToken}`}
+                });
+                const data = await res.json();
+                document.getElementById('practiceCard').style.display = 'none';
+                loadLearnerProgress();
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function loadLearnerProgress() {
+            if (!currentToken) return;
+            try {
+                const res = await fetch(`${API_BASE}/learner/progress`, {
+                    headers: {'Authorization': `Bearer ${currentToken}`}
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    document.getElementById('learnerTotalScore').innerText = data.totalScore;
+                    document.getElementById('learnerTotalTime').innerText = data.totalTimeSpent;
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function flagCurrentContent() {
+            const reason = prompt("يرجى توضيح سبب الإبلاغ عن هذا المحتوى:");
+            if (!reason) return;
+            try {
+                const res = await fetch(`${API_BASE}/learner/flag`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${currentToken}`
+                    },
+                    body: JSON.stringify({contentId: currentQuestion.questionId, reason: reason})
+                });
+                if (res.ok) {
+                    alert("تم إرسال البلاغ إلى فريق الإدارة بنجاح.");
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        function setSpeed(spd) {
+            alert(`تم ضبط سرعة الصوت على: ${spd}x`);
+        }
+
+        // --- Contributor Flow ---
+        async function loadAwaitingRecordings() {
+            if (!currentToken) return;
+            try {
+                const res = await fetch(`${API_BASE}/contributor/awaiting-recording`, {
+                    headers: {'Authorization': `Bearer ${currentToken}`}
+                });
+                if (!res.ok) return;
+                const data = await res.json();
+                const list = document.getElementById('awaitingRecordingsList');
+                list.innerHTML = '';
+                if (data.length === 0) {
+                    list.innerHTML = '<p style="color: var(--text-muted);">لا توجد نصوص تنتظر التسجيل حالياً.</p>';
+                    return;
+                }
+                data.forEach(p => {
+                    const div = document.createElement('div');
+                    div.style.cssText = "padding: 1rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;";
+                    div.innerHTML = `
+                        <div>
+                            <h4>${p.topic} <span class="badge badge-amber">${p.level}</span></h4>
+                            <p style="font-size: 0.9rem; color: var(--text-muted);">${p.text.substring(0, 80)}...</p>
+                        </div>
+                        <button class="btn btn-secondary" onclick="claimPassage('${p.passageId}', '${escape(p.text)}')">حجز لتسجيل الصوت</button>
+                    `;
+                    list.appendChild(div);
+                });
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function claimPassage(passageId, textEscaped) {
+            try {
+                const res = await fetch(`${API_BASE}/contributor/claim`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${currentToken}`
+                    },
+                    body: JSON.stringify({passageId: passageId})
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    alert("تم حجز النص بنجاح! لديك 72 ساعة لرفع التسجيل الصوتي.");
+                    currentClaimPassageId = passageId;
+                    rawPassageText = unescape(textEscaped);
+                    document.getElementById('recordingStudio').style.display = 'block';
+                    document.getElementById('recordingPassageText').innerText = rawPassageText;
+                } else {
+                    alert(data.detail || "تعذر حجز النص");
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        function toggleTashkeelView() {
+            isTashkeelVisible = !isTashkeelVisible;
+            if (isTashkeelVisible) {
+                document.getElementById('recordingPassageText').innerText = rawPassageText;
+            } else {
+                document.getElementById('recordingPassageText').innerText = rawPassageText.replace(/[\u0617-\u061A\u064B-\u0652]/g, "");
+            }
+        }
+
+        async function handleAudioUpload(event) {
+            event.preventDefault();
+            const fileInput = document.getElementById('audioFileInput');
+            const attribution = document.getElementById('attributionType').value;
+            if (!fileInput.files[0]) {
+                alert("يرجى اختيار ملف صوتي");
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('passageId', currentClaimPassageId);
+            formData.append('attribution', attribution);
+            formData.append('durationSeconds', 90);
+            formData.append('file', fileInput.files[0]);
+
+            try {
+                const res = await fetch(`${API_BASE}/contributor/submit-audio`, {
+                    method: 'POST',
+                    headers: {'Authorization': `Bearer ${currentToken}`},
+                    body: formData
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    alert("تم رفع التسجيل الصوتي بنجاح وهو الآن قيد التدقيق من قبل المراجعين.");
+                    document.getElementById('recordingStudio').style.display = 'none';
+                    loadAwaitingRecordings();
+                    loadContributorSubmissions();
+                } else {
+                    alert(data.detail || "فشل رفع الصوت");
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function loadContributorSubmissions() {
+            if (!currentToken) return;
+            try {
+                const res = await fetch(`${API_BASE}/contributor/submissions`, {
+                    headers: {'Authorization': `Bearer ${currentToken}`}
+                });
+                if (!res.ok) return;
+                const data = await res.json();
+                const container = document.getElementById('mySubmissionsList');
+                container.innerHTML = '';
+                data.forEach(s => {
+                    const badgeClass = s.status === 'VERIFIED' ? 'badge-green' : (s.status === 'REJECTED' ? 'badge-red' : 'badge-amber');
+                    const div = document.createElement('div');
+                    div.style.cssText = "padding: 0.75rem; border-bottom: 1px solid var(--border);";
+                    div.innerHTML = `
+                        <div>
+                            <strong>${s.passageTopic}</strong> - الحالة: <span class="badge ${badgeClass}">${s.status}</span>
+                            ${s.rejectionReason ? `<p style="color: var(--danger); font-size: 0.9rem; margin-top: 0.25rem;">سبب الرفض والملاحظات: ${s.rejectionReason}</p>` : ''}
+                        </div>
+                    `;
+                    container.appendChild(div);
+                });
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        // --- Reviewer Flow ---
+        async function loadPendingRecordings() {
+            if (!currentToken) return;
+            try {
+                const res = await fetch(`${API_BASE}/reviewer/pending-recordings`, {
+                    headers: {'Authorization': `Bearer ${currentToken}`}
+                });
+                if (!res.ok) return;
+                const data = await res.json();
+                const list = document.getElementById('pendingRecordingsList');
+                list.innerHTML = '';
+                if (data.length === 0) {
+                    list.innerHTML = '<p style="color: var(--text-muted);">لا توجد تسجيلات بانتظار المراجعة.</p>';
+                    return;
+                }
+                data.forEach(r => {
+                    const div = document.createElement('div');
+                    div.style.cssText = "padding: 1rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;";
+                    div.innerHTML = `
+                        <div>
+                            <h4>تسجيل صوتي (${r.durationSeconds} ثانية) <span class="badge badge-amber">${r.attribution}</span></h4>
+                            <p style="color: var(--text-muted); font-size: 0.85rem;">معرف التسجيل: ${r.recordingId}</p>
+                        </div>
+                        <button class="btn btn-outline" onclick="assignReview('${r.recordingId}')">بدء التدقيق والتقييم</button>
+                    `;
+                    list.appendChild(div);
+                });
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function assignReview(contentId) {
+            try {
+                const res = await fetch(`${API_BASE}/reviewer/assignments`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${currentToken}`
+                    },
+                    body: JSON.stringify({contentId: contentId})
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    currentAssignmentId = data.assignmentId;
+                    document.getElementById('evaluationFormCard').style.display = 'block';
+                    document.getElementById('evalRecordingInfo').innerText = `جاري تدقيق التسجيل: ${contentId} (المهمة: ${currentAssignmentId})`;
+                } else {
+                    alert(data.detail || "تعذر بدء المراجعة");
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function submitDecision(isApproved) {
+            const isFusha = document.getElementById('checkFusha').checked;
+            const dialectFree = document.getElementById('checkDialectFree').checked;
+            const audioQuality = parseInt(document.getElementById('audioQuality').value);
+            const reason = document.getElementById('reviewReason').value;
+
+            try {
+                const res = await fetch(`${API_BASE}/reviewer/decision`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${currentToken}`
+                    },
+                    body: JSON.stringify({
+                        assignmentId: currentAssignmentId,
+                        isFusha: isFusha,
+                        dialectFree: dialectFree,
+                        audioQuality: audioQuality,
+                        isApproved: isApproved,
+                        reason: reason
+                    })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    alert(data.message || "تم تسجيل قرار المراجعة بنجاح");
+                    document.getElementById('evaluationFormCard').style.display = 'none';
+                    loadPendingRecordings();
+                } else {
+                    alert(data.detail || "فشل تسجيل القرار");
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        // --- Admin Flow ---
+        async function loadAdminData() {
+            if (!currentToken) return;
+            try {
+                const res = await fetch(`${API_BASE}/admin/dashboard`, {
+                    headers: {'Authorization': `Bearer ${currentToken}`}
+                });
+                if (!res.ok) return;
+                const data = await res.json();
+                const rep = data.report;
+                document.getElementById('adminReportData').innerHTML = `
+                    <div class="grid-2">
+                        <div style="background: #f1f5f9; padding: 1rem; border-radius: 8px;">
+                            <strong>إجمالي المستخدمين:</strong> ${rep.totalUsers}
+                        </div>
+                        <div style="background: #f1f5f9; padding: 1rem; border-radius: 8px;">
+                            <strong>إجمالي النصوص المسجلة:</strong> ${rep.totalPassages}
+                        </div>
+                        <div style="background: #f1f5f9; padding: 1rem; border-radius: 8px;">
+                            <strong>النصوص المعتمدة:</strong> ${rep.verifiedPassages}
+                        </div>
+                        <div style="background: #f1f5f9; padding: 1rem; border-radius: 8px;">
+                            <strong>التسجيلات قيد المراجعة:</strong> ${rep.pendingRecordings}
+                        </div>
+                    </div>
+                `;
+
+                // Load flags
+                const fRes = await fetch(`${API_BASE}/admin/flags`, {
+                    headers: {'Authorization': `Bearer ${currentToken}`}
+                });
+                if (fRes.ok) {
+                    const flags = await fRes.json();
+                    const container = document.getElementById('adminFlagsList');
+                    container.innerHTML = '';
+                    if (flags.length === 0) {
+                        container.innerHTML = '<p style="color: var(--text-muted);">لا توجد بلاغات معلقة.</p>';
+                    } else {
+                        flags.forEach(f => {
+                            const div = document.createElement('div');
+                            div.style.cssText = "padding: 0.75rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;";
+                            div.innerHTML = `
+                                <div>
+                                    <strong>بلاغ عن ${f.contentType}</strong>: ${f.reason}
+                                    <span class="badge badge-amber">${f.status}</span>
+                                </div>
+                                <div>
+                                    <button class="btn btn-danger" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;" onclick="resolveFlag('${f.flagId}', 'ACTION_TAKEN')">حجب المحتوى</button>
+                                    <button class="btn btn-outline" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;" onclick="resolveFlag('${f.flagId}', 'NO_ACTION')">تجاهل البلاغ</button>
+                                </div>
+                            `;
+                            container.appendChild(div);
+                        });
+                    }
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function triggerAiGeneration() {
+            // Pick first passage or create one
+            const res = await fetch(`${API_BASE}/passages`);
+            const passages = await res.json();
+            if (passages.length === 0) {
+                alert("لا توجد نصوص لربط التوليد بها.");
+                return;
+            }
+            const pId = passages[0].passageId;
+            const aiRes = await fetch(`${API_BASE}/admin/generate`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${currentToken}`
+                },
+                body: JSON.stringify({passageId: pId})
+            });
+            const data = await aiRes.json();
+            alert(`تم توليد النص بنجاح (${data.questionsCount} أسئلة) وهو قيد المراجعة البشرية.`);
+            loadLearnerPassages();
+        }
+
+        async function resolveFlag(flagId, newState) {
+            const res = await fetch(`${API_BASE}/admin/flags/${flagId}/resolve`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${currentToken}`
+                },
+                body: JSON.stringify({newState: newState})
+            });
+            if (res.ok) {
+                alert("تمت معالجة البلاغ بنجاح");
+                loadAdminData();
+            }
+        }
+
+        // Initialize on load
+        window.addEventListener('DOMContentLoaded', () => {
+            loadLearnerPassages();
+            quickLogin('learner@asghi.org');
+        });
+    </script>
+</body>
+</html>

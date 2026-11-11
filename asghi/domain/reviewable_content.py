@@ -14,6 +14,8 @@ if TYPE_CHECKING:
 
 
 class ReviewableContent(ABC):
+    _registry: List[ReviewableContent] = []
+
     def __init__(
         self,
         contentId: Optional[UUID] = None,
@@ -32,6 +34,9 @@ class ReviewableContent(ABC):
         self.reviews: List[ReviewAssignment] = []
         self.flags: List[ContentFlag] = []
         self.rejectionReason: Optional[str] = None
+
+        ReviewableContent._registry.append(self)
+
 
     @property
     def approvalCount(self) -> int:

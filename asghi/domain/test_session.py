@@ -21,6 +21,8 @@ POINTS_BY_DIFFICULTY = {
 
 
 class TestSession:
+    __test__ = False
+
     def __init__(
         self,
         passageId: UUID,
