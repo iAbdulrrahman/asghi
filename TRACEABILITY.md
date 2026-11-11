@@ -17,7 +17,7 @@
 | 3.2 | DONE | `asghi/domain/ai_engine.py::AIEngine.generateQuestions` | `tests/test_ai_and_review.py::test_ai_question_generation_difficulties` |
 | 3.3 | DONE | `asghi/domain/enums.py::ContentStatus.PENDING_REVIEW`, `asghi/domain/ai_engine.py::AIEngine` | `tests/test_ai_and_review.py::test_ai_content_requires_human_review` |
 | 4 | DONE | `asghi/domain/contributor_profile.py::ContributorProfile`, `POST /api/contributor/claim` | `tests/test_contributor_api.py::test_contributor_recording_cycle` |
-| 4.1 | DONE | `asghi/domain/passage.py::Passage.awaitingRecording`, `GET /api/contributor/awaiting-recording`, `POST /api/contributor/claim` | `tests/test_contributor_api.py::test_browse_and_claim_passages` |
+| 4.1 | DONE | `asghi/domain/passage.py::Passage.awaitingRecording`, `GET /api/contributor/awaiting-recording`, `POST /api/contributor/claim` | `tests/test_contributor_api.py::test_browse_and_claim_passages`, `tests/test_fix_5_claim_race_and_ttl.py::test_claim_race_concurrent_threads` |
 | 4.2 | DONE | `asghi/domain/contributor_profile.py::ContributorProfile.recordOrUploadAudio`, `POST /api/contributor/submit-audio` | `tests/test_contributor_api.py::test_upload_audio_recording` |
 | 4.3 | DONE | `asghi/domain/contributor_profile.py::ContributorProfile.toggleTashkeel`, `GET /api/passages/{id}/text` | `tests/test_contributor_api.py::test_passage_display_and_tashkeel_toggle` |
 | 4.4 | DONE | `asghi/domain/enums.py::AttributionType`, `asghi/domain/audio_recording.py::AudioRecording.attribution` | `tests/test_contributor_api.py::test_attribution_choice` |

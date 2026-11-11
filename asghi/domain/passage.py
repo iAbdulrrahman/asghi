@@ -61,11 +61,13 @@ class Passage(ReviewableContent):
         return (now - claimed_at) > CLAIM_TTL
 
     def claim(self, contributorId: UUID) -> bool:
-        """Implements Sequence 1: claim cycle logic."""
+        """Implements Sequence 1: claim cycle logic.
+        P1 Item 5: Remove 'refresh my own claim' path so 72h TTL is real.
+        """
         expired = self.isClaimExpired()
 
-        # If claimed by someone else and not expired
-        if self.claimedBy is not None and self.claimedBy != contributorId and not expired:
+        # If already claimed and claim has not expired: cannot be claimed by anyone
+        if self.claimedBy is not None and not expired:
             return False
 
         # If already has a VERIFIED or PENDING_REVIEW recording
@@ -76,7 +78,7 @@ class Passage(ReviewableContent):
         if has_active_recording:
             return False
 
-        # Free, or previous claim expired (or re-claiming own active claim)
+        # Free, or previous claim expired
         self.claimedBy = contributorId
         self.claimedAt = datetime.now(timezone.utc)
         self.changeStatus(ContentStatus.CLAIMED)

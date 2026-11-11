@@ -728,3 +728,116 @@ class Repository:
                 return p
         return None
 
+    def _save_passage_conn(self, conn: sqlite3.Connection, passage: Passage) -> None:
+        conn.execute("""
+        INSERT INTO passages (
+            passage_id, text, level, topic, duration_seconds,
+            claimed_by, claimed_at, author_id, status, origin, rejection_reason
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(passage_id) DO UPDATE SET
+            text=excluded.text,
+            level=excluded.level,
+            topic=excluded.topic,
+            duration_seconds=excluded.duration_seconds,
+            claimed_by=excluded.claimed_by,
+            claimed_at=excluded.claimed_at,
+            author_id=excluded.author_id,
+            status=excluded.status,
+            origin=excluded.origin,
+            rejection_reason=excluded.rejection_reason;
+        """, (
+            str(passage.passageId),
+            passage.text,
+            passage.level.value,
+            passage.topic,
+            passage.duration.total_seconds(),
+            str(passage.claimedBy) if passage.claimedBy else None,
+            passage.claimedAt.isoformat() if passage.claimedAt else None,
+            str(passage.authorId) if passage.authorId else None,
+            passage.status.value,
+            passage.origin.value,
+            passage.rejectionReason,
+        ))
+
+    def claim_passage_tx(self, passage_id: UUID, contributor_id: UUID, ttl_seconds: int = 259200) -> bool:
+        """Atomic claim using conditional UPDATE in an IMMEDIATE transaction.
+        P1 Item 5: single conditional UPDATE, returns True if won, False otherwise.
+        """
+        now = datetime.now(timezone.utc)
+        now_iso = now.isoformat()
+        with self._get_conn() as conn:
+            conn.execute("BEGIN IMMEDIATE;")
+            # 1. Check if passage already has active recording (VERIFIED or PENDING_REVIEW)
+            active_rec = conn.execute("""
+                SELECT 1 FROM audio_recordings
+                WHERE passage_id = ? AND status IN ('VERIFIED', 'PENDING_REVIEW');
+            """, (str(passage_id),)).fetchone()
+            if active_rec:
+                conn.execute("ROLLBACK;")
+                return False
+
+            # 2. Check if passage is in DB; if not, persist from registry
+            p_row = conn.execute("SELECT claimed_by, claimed_at FROM passages WHERE passage_id = ?;", (str(passage_id),)).fetchone()
+            if not p_row:
+                target_p = next((p for p in Passage._registry if p.passageId == passage_id), None)
+                if target_p:
+                    self._save_passage_conn(conn, target_p)
+
+            # 3. Single conditional UPDATE: only succeeds if free or expired
+            cur = conn.execute("""
+                UPDATE passages
+                SET claimed_by = ?, claimed_at = ?, status = 'CLAIMED'
+                WHERE passage_id = ?
+                  AND (
+                      claimed_by IS NULL
+                      OR (strftime('%s', 'now') - strftime('%s', claimed_at)) > ?
+                  );
+            """, (str(contributor_id), now_iso, str(passage_id), ttl_seconds))
+
+            if cur.rowcount == 0:
+                conn.execute("ROLLBACK;")
+                return False
+
+            # 4. Upsert active_claims table
+            conn.execute("""
+                INSERT INTO active_claims (passage_id, contributor_id, claimed_at)
+                VALUES (?, ?, ?)
+                ON CONFLICT(passage_id) DO UPDATE SET
+                    contributor_id = excluded.contributor_id,
+                    claimed_at = excluded.claimed_at;
+            """, (str(passage_id), str(contributor_id), now_iso))
+
+            conn.commit()
+
+            # Synchronize in-memory registry instance
+            for p in Passage._registry:
+                if p.passageId == passage_id:
+                    p.claimedBy = contributor_id
+                    p.claimedAt = now
+                    p.changeStatus(ContentStatus.CLAIMED)
+                    break
+            return True
+
+    def sweep_expired_claims(self, ttl_seconds: int = 259200) -> int:
+        """Release expired claims that exceeded TTL back to DRAFT.
+        P1 Item 5: TTL sweeper that releases expired claims.
+        """
+        with self._get_conn() as conn:
+            cursor = conn.execute("""
+            UPDATE passages
+            SET claimed_by = NULL, claimed_at = NULL, status = 'DRAFT'
+            WHERE claimed_by IS NOT NULL
+              AND claimed_at IS NOT NULL
+              AND (strftime('%s', 'now') - strftime('%s', claimed_at)) > ?;
+            """, (ttl_seconds,))
+            freed = cursor.rowcount
+            if freed > 0:
+                conn.execute("""
+                DELETE FROM active_claims
+                WHERE passage_id NOT IN (SELECT passage_id FROM passages WHERE claimed_by IS NOT NULL);
+                """)
+            for p in Passage._registry:
+                if p.claimedBy and p.isClaimExpired():
+                    p.releaseClaim()
+            return freed
