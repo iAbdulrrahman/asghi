@@ -203,6 +203,19 @@ class MockHttpAdapter implements HttpClientAdapter {
       });
     }
 
+    // POST /api/admin/generate
+    if (path.contains('/api/admin/generate') && method == 'POST') {
+      final data = {
+        'message': 'تم توليد المحتوى بالذكاء الاصطناعي',
+        'passageId': 'p-ai-gen-1',
+        'topic': 'أدب ولغة',
+        'questionsCount': 3,
+      };
+      return ResponseBody.fromString(jsonEncode(data), 200, headers: {
+        Headers.contentTypeHeader: [Headers.jsonContentType],
+      });
+    }
+
     // GET /api/admin/dashboard
     if (path.contains('/api/admin/dashboard')) {
       final data = {
