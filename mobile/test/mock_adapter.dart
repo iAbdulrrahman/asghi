@@ -17,6 +17,29 @@ class MockHttpAdapter implements HttpClientAdapter {
     final path = options.uri.path;
     final method = options.method.toUpperCase();
 
+    // POST /api/auth/register
+    if (path == '/api/auth/register' && method == 'POST') {
+      final data = {
+        'accessToken': 'jwt-reg-test-token',
+        'tokenType': 'bearer',
+        'userId': 'u-reg-1',
+      };
+      return ResponseBody.fromString(jsonEncode(data), 200, headers: {
+        Headers.contentTypeHeader: [Headers.jsonContentType],
+      });
+    }
+
+    // POST /api/users/profile
+    if (path == '/api/users/profile' && method == 'POST') {
+      final data = {
+        'message': 'تم إكمال الملف التعريفي بنجاح',
+        'profileId': 'prof-reg-1',
+      };
+      return ResponseBody.fromString(jsonEncode(data), 200, headers: {
+        Headers.contentTypeHeader: [Headers.jsonContentType],
+      });
+    }
+
     // GET /api/users/me
     if (path.contains('/api/users/me')) {
       final data = {

@@ -19,8 +19,12 @@ Widget createTestableWidget(Widget child, {AudioRecorderService? recorder, Audio
   final apiClient = ApiClient();
   apiClient.useSecureStorage = false;
   apiClient.dio.httpClientAdapter = MockHttpAdapter();
+  apiClient.onUnauthorized = null;
+  apiClient.onNetworkError = null;
+  apiClient.inMemoryToken = null;
 
   return ProviderScope(
+    key: UniqueKey(),
     overrides: [
       apiClientProvider.overrideWithValue(apiClient),
       audioRecorderProvider.overrideWithValue(recorder ?? BundledAudioSource(simulatedDuration: const Duration(seconds: 75))),
@@ -46,6 +50,16 @@ void main() {
     final client = ApiClient();
     client.useSecureStorage = false;
     client.dio.httpClientAdapter = MockHttpAdapter();
+    client.onUnauthorized = null;
+    client.onNetworkError = null;
+    client.inMemoryToken = null;
+  });
+
+  tearDown(() {
+    final client = ApiClient();
+    client.onUnauthorized = null;
+    client.onNetworkError = null;
+    client.inMemoryToken = null;
   });
 
   testWidgets('Item 25: Login screen renders input fields and submit button', (WidgetTester tester) async {
@@ -88,7 +102,12 @@ void main() {
 
   testWidgets('Item 25: Contributor screen renders claim buttons, 72h banner, and tabs', (WidgetTester tester) async {
     await tester.pumpWidget(createTestableWidget(const ContributorScreen()));
-    for (int i = 0; i < 10; i++) {
+    await tester.pump();
+    for (int i = 0; i < 20; i++) {
+      await tester.pump(const Duration(milliseconds: 50));
+    }
+
+    for (int i = 0; i < 25; i++) {
       await tester.pump(const Duration(milliseconds: 50));
     }
 
@@ -99,7 +118,7 @@ void main() {
 
     // Tap claim button
     await tester.tap(find.byKey(const Key('claimButton_p-awaiting-1')));
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < 25; i++) {
       await tester.pump(const Duration(milliseconds: 50));
     }
 
@@ -109,19 +128,20 @@ void main() {
   testWidgets('Item 6: Contributor recording modal opens and shows duration validation', (WidgetTester tester) async {
     final shortRecorder = BundledAudioSource(simulatedDuration: const Duration(seconds: 30));
     await tester.pumpWidget(createTestableWidget(const ContributorScreen(), recorder: shortRecorder));
-    for (int i = 0; i < 10; i++) {
+    await tester.pump();
+    for (int i = 0; i < 25; i++) {
       await tester.pump(const Duration(milliseconds: 50));
     }
 
     // Claim
     await tester.tap(find.byKey(const Key('claimButton_p-awaiting-1')));
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < 25; i++) {
       await tester.pump(const Duration(milliseconds: 50));
     }
 
     expect(find.text('تسجيل ورفع الصوت الحقيقي'), findsOneWidget);
     await tester.tap(find.text('تسجيل ورفع الصوت الحقيقي'));
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < 25; i++) {
       await tester.pump(const Duration(milliseconds: 50));
     }
 
@@ -142,7 +162,8 @@ void main() {
     );
 
     await tester.pumpWidget(createTestableWidget(PracticeScreen(passage: passage)));
-    for (int i = 0; i < 20; i++) {
+    await tester.pump();
+    for (int i = 0; i < 35; i++) {
       await tester.pump(const Duration(milliseconds: 50));
     }
 
@@ -151,7 +172,7 @@ void main() {
 
     // Select correct answer 'الحضارة'
     await tester.tap(find.text('الحضارة'));
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < 25; i++) {
       await tester.pump(const Duration(milliseconds: 50));
     }
 
