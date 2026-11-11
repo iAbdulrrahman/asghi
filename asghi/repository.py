@@ -841,6 +841,21 @@ class Repository:
                     p.releaseClaim()
             return freed
 
+    def sweep_abandoned_sessions(self, ttl_seconds: int = 86400) -> int:
+        """Mark abandoned/stale test sessions older than ttl_seconds (default 24h) as finished."""
+        from datetime import datetime, timezone
+        now_iso = datetime.now(timezone.utc).isoformat()
+        with self._get_conn() as conn:
+            cursor = conn.execute("""
+            UPDATE test_sessions
+            SET finished_at = ?, total_score = COALESCE(total_score, 0)
+            WHERE finished_at IS NULL
+              AND started_at IS NOT NULL
+              AND (strftime('%s', 'now') - strftime('%s', started_at)) > ?;
+            """, (now_iso, ttl_seconds))
+            closed = cursor.rowcount
+            return closed
+
     def submit_verdict_tx(
         self,
         assignment_id: UUID,

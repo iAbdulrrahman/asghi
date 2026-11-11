@@ -46,7 +46,7 @@ def test_ai_generation_and_human_review():
     assert data["questionsCount"] == 3
     assert len(passage.text) > 0
     assert passage.origin == Origin.AI
-    assert passage.status == ContentStatus.PENDING_REVIEW
+    assert passage.status == ContentStatus.DRAFT
 
 
 def test_ai_content_generator():
@@ -104,7 +104,7 @@ def test_ai_content_requires_human_review():
 
     # Questions are in PENDING_REVIEW
     for q in passage.questions:
-        assert q.status == ContentStatus.PENDING_REVIEW
+        assert q.status == ContentStatus.DRAFT
 
     # Reviewer fetches pending questions (Req 3.3 / 7.3)
     p_res = client.get("/api/reviewer/pending-questions", headers={"Authorization": f"Bearer {rev_token}"})

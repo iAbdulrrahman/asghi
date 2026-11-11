@@ -7,7 +7,8 @@ import pytest
 from fastapi.testclient import TestClient
 
 from asghi.api import app
-from asghi.domain.enums import UserRole, Level, AttributionType, Origin
+from asghi.domain.enums import UserRole, Level, AttributionType, Origin, ContentStatus, Difficulty
+from asghi.domain.question import Question
 from asghi.domain.user import User
 from asghi.domain.passage import Passage
 from asghi.domain.contributor_profile import ContributorProfile
@@ -148,8 +149,17 @@ def test_nfr17_2_first_time_learner():
         level=Level.A1,
         topic="التعارف",
         duration=timedelta(seconds=60),
-        status=Level.A1,
+        status=ContentStatus.VERIFIED,
     )
+    p.addQuestion(Question(
+        promptText="ما موضوع النص؟",
+        answers=["التعارف", "العلوم"],
+        correctAnswer="التعارف",
+        explanation="النص يتحدث عن التعارف",
+        difficulty=Difficulty.EASY,
+        status=ContentStatus.VERIFIED,
+        passageId=p.passageId,
+    ))
     res = client.post(
         "/api/learner/sessions",
         headers={"Authorization": f"Bearer {token}"},
