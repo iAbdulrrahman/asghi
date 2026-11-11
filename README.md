@@ -33,7 +33,8 @@ export SECRET_KEY="your-strong-production-random-secret-key"
 ### 4. Database Seeding
 Seed the database with sample listening passages, tiered comprehension questions (Easy, Medium, Hard), and seed accounts across all four roles (Admin, Reviewers, Contributor, Learner):
 ```bash
-python -m asghi.seed
+python seed.py
+# Root entry point delegating to asghi.seed
 ```
 
 ### 5. Running the Application
