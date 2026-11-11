@@ -373,6 +373,7 @@ def browse_passages(
             "audioRecordings": [
                 {
                     "contentId": str(r.contentId),
+                    "recordingId": str(r.contentId),
                     "audioFile": r.audioFile,
                     "attribution": r.attribution.value,
                     "status": r.status.value,
@@ -508,6 +509,7 @@ async def submit_audio(
     return {
         "message": "تم رفع التسجيل الصوتي بنجاح وهو قيد المراجعة",
         "recordingId": str(rec.contentId),
+        "audioFile": rec.audioFile,
         "status": rec.status.value,
         "attribution": rec.attribution.value,
     }
@@ -555,6 +557,7 @@ def get_pending_recordings(user: User = Depends(get_current_user)):
         {
             "recordingId": str(r.contentId),
             "passageId": str(r.passageId),
+            "audioFile": r.audioFile,
             "durationSeconds": r.duration.total_seconds(),
             "attribution": r.attribution.value,
             "authorId": str(r.authorId) if r.authorId else None,
