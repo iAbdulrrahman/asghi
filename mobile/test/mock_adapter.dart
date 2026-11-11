@@ -184,6 +184,29 @@ class MockHttpAdapter implements HttpClientAdapter {
       });
     }
 
+    // POST /api/reviewer/assignments
+    if (path == '/api/reviewer/assignments' && method == 'POST') {
+      final data = {
+        'assignmentId': 'assign-101',
+        'contentId': 'rec-pending-1',
+        'isSpecialistReview': false,
+      };
+      return ResponseBody.fromString(jsonEncode(data), 200, headers: {
+        Headers.contentTypeHeader: [Headers.jsonContentType],
+      });
+    }
+
+    // POST /api/reviewer/questions/{id}/review
+    if (path.contains('/api/reviewer/questions/') && path.contains('/review') && method == 'POST') {
+      final data = {
+        'message': 'تم تحديث حالة السؤال بنجاح',
+        'status': 'VERIFIED',
+      };
+      return ResponseBody.fromString(jsonEncode(data), 200, headers: {
+        Headers.contentTypeHeader: [Headers.jsonContentType],
+      });
+    }
+
     // GET /api/reviewer/pending-recordings
     if (path.contains('/api/reviewer/pending-recordings')) {
       final data = [

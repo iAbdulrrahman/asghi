@@ -565,18 +565,34 @@ def get_pending_recordings(user: User = Depends(get_current_user)):
         raise HTTPException(status_code=403, detail="المستخدم ليس مراجعاً")
 
     pending = reviewer_prof.pendingRecordings()
-    return [
-        {
+    res = []
+    for r in pending:
+        parent_p = next((p for p in Passage._registry if p.passageId == r.passageId), None)
+        fn = os.path.basename(r.audioFile) if r.audioFile else ""
+        res.append({
             "recordingId": str(r.contentId),
             "passageId": str(r.passageId),
+            "topic": parent_p.topic if parent_p else "عام",
+            "passageTopic": parent_p.topic if parent_p else "عام",
+            "passageText": parent_p.text if parent_p else "",
             "audioFile": r.audioFile,
+            "audioUrl": f"/api/audio/{fn}" if fn else "",
             "durationSeconds": r.duration.total_seconds(),
             "attribution": r.attribution.value,
             "authorId": str(r.authorId) if r.authorId else None,
             "status": r.status.value,
-        }
-        for r in pending
-    ]
+        })
+    return res
+
+
+@app.get(
+    "/api/reviewer/assignments",
+    dependencies=[Depends(require_roles(UserRole.REVIEWER, UserRole.ADMIN))],
+    include_in_schema=False,
+)
+def get_reviewer_assignments_alias(user: User = Depends(get_current_user)):
+    """Backwards compatibility alias for reviewer queue."""
+    return get_pending_recordings(user)
 
 
 @app.post(
