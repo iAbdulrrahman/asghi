@@ -107,12 +107,12 @@ class SimulatedAudioPlaybackService implements AudioPlaybackService {
   final StreamController<String?> _errCtrl = StreamController<String?>.broadcast();
 
   Duration _position = Duration.zero;
-  Duration? _duration;
+  final Duration? _duration;
   bool _isPlaying = false;
   double _speed = 1.0;
 
-  SimulatedAudioPlaybackService({Duration duration = const Duration(seconds: 90)})
-      : _duration = duration;
+  SimulatedAudioPlaybackService({Duration? duration})
+      : _duration = duration ?? const Duration(seconds: 90);
 
   @override
   Stream<Duration> get positionStream => _posCtrl.stream;
