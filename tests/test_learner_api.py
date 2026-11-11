@@ -4,7 +4,7 @@ from datetime import timedelta
 import pytest
 from fastapi.testclient import TestClient
 
-from asghi.api import app
+from asghi.api import app, get_repository
 from asghi.domain.enums import UserRole, Level, ContentStatus, Difficulty, QuestionType
 from asghi.domain.user import User
 from asghi.domain.passage import Passage
@@ -70,6 +70,7 @@ def _setup_verified_passage():
     p.addQuestion(q_easy)
     p.addQuestion(q_med)
     p.addQuestion(q_hard)
+    get_repository().save_passage(p)
     return p
 
 

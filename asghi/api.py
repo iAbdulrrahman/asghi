@@ -707,6 +707,8 @@ def start_learner_session(req: StartSessionRequest, user: User = Depends(get_cur
     session = learner_prof.startSession(req.passageId)
     session.learnerId = user.userId
     active_sessions[session.sessionId] = session
+    repo = get_repository()
+    repo.save_test_session(session)
 
     return {
         "sessionId": str(session.sessionId),
@@ -755,6 +757,11 @@ def submit_session_answer(
         raise HTTPException(status_code=404, detail="الجلسة غير موجودة")
 
     result = session.submitAnswer(req.questionId, req.answer)
+    repo = get_repository()
+    if session.questionResponses:
+        repo.save_question_response(session.sessionId, session.questionResponses[-1])
+    repo.save_test_session(session)
+
     return {
         "isCorrect": result["isCorrect"],
         "correctAnswer": result["correctAnswer"],
@@ -781,6 +788,8 @@ def finish_learner_session(sessionId: UUID, user: User = Depends(get_current_use
     totals = session.finishSession()
     learner_prof.progress.update(totals["totalScore"], totals["timeSpent"])
     del active_sessions[sessionId]
+    repo = get_repository()
+    repo.save_test_session(session)
     repo.save_user(user)
 
     return {
