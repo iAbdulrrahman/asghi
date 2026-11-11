@@ -396,6 +396,9 @@ class Repository:
                 for r in q.reviews:
                     self._save_review_assignment_conn(conn, r)
 
+            for flag in passage.flags:
+                self._save_content_flag_conn(conn, flag)
+
     def _save_review_assignment_conn(self, conn: sqlite3.Connection, r: ReviewAssignment) -> None:
         fb = r.feedback
         conn.execute("""
@@ -425,20 +428,23 @@ class Repository:
             fb.feedback if fb else None,
         ))
 
+    def _save_content_flag_conn(self, conn: sqlite3.Connection, flag: ContentFlag) -> None:
+        conn.execute("""
+        INSERT INTO content_flags (flag_id, content_id, reporter_id, reason, status)
+        VALUES (?, ?, ?, ?, ?)
+        ON CONFLICT(flag_id) DO UPDATE SET
+            status=excluded.status;
+        """, (
+            str(flag.flagId),
+            str(flag.contentId),
+            str(flag.reporterId) if flag.reporterId else None,
+            flag.reason,
+            flag.status.value,
+        ))
+
     def save_content_flag(self, flag: ContentFlag) -> None:
         with self._get_conn() as conn:
-            conn.execute("""
-            INSERT INTO content_flags (flag_id, content_id, reporter_id, reason, status)
-            VALUES (?, ?, ?, ?, ?)
-            ON CONFLICT(flag_id) DO UPDATE SET
-                status=excluded.status;
-            """, (
-                str(flag.flagId),
-                str(flag.contentId),
-                str(flag.reporterId) if flag.reporterId else None,
-                flag.reason,
-                flag.status.value,
-            ))
+            self._save_content_flag_conn(conn, flag)
 
     def save_review_assignment(self, r: ReviewAssignment) -> None:
         """Persist review assignment and feedback."""
@@ -963,6 +969,68 @@ class Repository:
                                     fb = prof.createFeedback(is_fusha, dialect_free, audio_quality, effective_reason)
                                     prof.submitDecision(a, fb, effective_approval, effective_reason)
                                     break
+                return True
+            except Exception:
+                conn.execute("ROLLBACK;")
+                raise
+
+    def record_answer_tx(self, session: TestSession, qr: QuestionResponse, fail_injection: bool = False) -> bool:
+        """P1 Item 7: response + score + difficulty in one transaction."""
+        with self._get_conn() as conn:
+            conn.execute("BEGIN IMMEDIATE;")
+            try:
+                self._save_question_response_conn(conn, session.sessionId, qr)
+                conn.execute("""
+                    UPDATE test_sessions
+                    SET total_score = ?, current_difficulty = ?
+                    WHERE session_id = ?;
+                """, (
+                    session.totalScore,
+                    session.currentDifficulty.value if hasattr(session.currentDifficulty, "value") else str(session.currentDifficulty),
+                    str(session.sessionId),
+                ))
+
+                if fail_injection:
+                    raise RuntimeError("Injected failure in record_answer_tx")
+
+                conn.commit()
+                return True
+            except Exception:
+                conn.execute("ROLLBACK;")
+                raise
+
+    def resolve_flag_tx(self, flag_id: UUID, new_status: FlagStatus, fail_injection: bool = False) -> bool:
+        """P1 Item 7: flag status + content status in one transaction."""
+        with self._get_conn() as conn:
+            conn.execute("BEGIN IMMEDIATE;")
+            try:
+                f_row = conn.execute("SELECT content_id FROM content_flags WHERE flag_id = ?;", (str(flag_id),)).fetchone()
+                if not f_row:
+                    conn.execute("ROLLBACK;")
+                    return False
+                content_id = f_row["content_id"]
+
+                conn.execute("UPDATE content_flags SET status = ? WHERE flag_id = ?;", (new_status.value, str(flag_id)))
+
+                target_content_status = "FLAGGED" if new_status == FlagStatus.ACTION_TAKEN else ("VERIFIED" if new_status == FlagStatus.NO_ACTION else None)
+
+                if target_content_status:
+                    conn.execute("UPDATE passages SET status = ? WHERE passage_id = ?;", (target_content_status, content_id))
+                    conn.execute("UPDATE audio_recordings SET status = ? WHERE recording_id = ?;", (target_content_status, content_id))
+                    conn.execute("UPDATE questions SET status = ? WHERE question_id = ?;", (target_content_status, content_id))
+
+                if fail_injection:
+                    raise RuntimeError("Injected failure in resolve_flag_tx")
+
+                conn.commit()
+
+                for p in Passage._registry:
+                    for f in p.flags:
+                        if f.flagId == flag_id:
+                            f.resolve(new_status)
+                            if target_content_status:
+                                p.status = ContentStatus(target_content_status)
+                            break
                 return True
             except Exception:
                 conn.execute("ROLLBACK;")

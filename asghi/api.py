@@ -482,13 +482,19 @@ async def submit_audio(
     if not target_p:
         raise HTTPException(status_code=404, detail="النص غير موجود")
 
-    rec = target_p.addAudio(
-        audioFile=saved_filename,
-        duration=timedelta(seconds=durationSeconds),
-        attribution=attribution,
-        authorId=contributor_prof.userRoleProfileId,
-    )
-    repo.save_passage(target_p)
+    try:
+        rec = target_p.addAudio(
+            audioFile=saved_filename,
+            duration=timedelta(seconds=durationSeconds),
+            attribution=attribution,
+            authorId=user.userId,
+        )
+        repo = get_repository()
+        repo.save_passage(target_p)
+    except Exception:
+        if os.path.exists(saved_path):
+            os.remove(saved_path)
+        raise
 
     return {
         "message": "تم رفع التسجيل الصوتي بنجاح وهو قيد المراجعة",
@@ -784,8 +790,7 @@ def submit_session_answer(
     result = session.submitAnswer(req.questionId, req.answer)
     repo = get_repository()
     if session.questionResponses:
-        repo.save_question_response(session.sessionId, session.questionResponses[-1])
-    repo.save_test_session(session)
+        repo.record_answer_tx(session, session.questionResponses[-1])
 
     return {
         "isCorrect": result["isCorrect"],
@@ -1014,8 +1019,10 @@ def resolve_flag(flagId: UUID, req: ResolveFlagRequest, user: User = Depends(get
     if not admin_prof:
         raise HTTPException(status_code=403, detail="المستخدم ليس مديراً")
 
+    repo = get_repository()
+    # P1 Item 7: flag status + content status in one transaction
+    repo.resolve_flag_tx(flagId, req.newState)
     admin_prof.resolveFlag(flagId, req.newState)
-    repo.sync_all_to_db()
     return {"message": "تمت معالجة البلاغ بنجاح", "flagId": str(flagId), "newState": req.newState.value}
 
 
