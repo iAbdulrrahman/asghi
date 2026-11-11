@@ -542,7 +542,7 @@ def get_contributor_submissions(user: User = Depends(get_current_user)):
     submissions = []
     for p in Passage._registry:
         for rec in p.audioRecordings:
-            if rec.authorId == contributor_prof.userRoleProfileId:
+            if rec.authorId in (user.userId, contributor_prof.userRoleProfileId):
                 submissions.append({
                     "recordingId": str(rec.contentId),
                     "passageId": str(p.passageId),
