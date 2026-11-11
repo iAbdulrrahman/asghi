@@ -905,8 +905,8 @@ def get_learner_progress(user: User = Depends(get_current_user)):
     try:
         with repo._get_conn() as conn:
             row = conn.execute(
-                "SELECT COUNT(*) as count FROM test_sessions WHERE learner_id = ? AND is_completed = 1;",
-                (str(learner_prof.userRoleProfileId),)
+                "SELECT COUNT(*) as count FROM test_sessions WHERE (learner_id = ? OR learner_id = ?) AND finished_at IS NOT NULL;",
+                (str(user.userId), str(learner_prof.userRoleProfileId))
             ).fetchone()
             if row:
                 completed = row["count"]
