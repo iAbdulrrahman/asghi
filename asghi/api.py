@@ -206,7 +206,9 @@ class SubmitAnswerRequest(BaseModel):
 
 
 class TriggerAIRequest(BaseModel):
-    passageId: UUID
+    passageId: Optional[UUID] = None
+    topic: Optional[str] = "عام"
+    level: Optional[Level] = Level.B1
 
 
 class PlayAudioRequest(BaseModel):
@@ -418,6 +420,16 @@ def get_awaiting_recording():
         }
         for p in passages
     ]
+
+
+@app.get(
+    "/api/passages/awaiting-recording",
+    dependencies=[Depends(require_roles(UserRole.CONTRIBUTOR, UserRole.ADMIN))],
+    include_in_schema=False,
+)
+def get_awaiting_recording_alias():
+    """Alias for awaiting-recording under passages path."""
+    return get_awaiting_recording()
 
 
 @app.post(
@@ -1005,19 +1017,43 @@ def create_catalogue_passage(req: CreatePassageRequest, user: User = Depends(get
     "/api/admin/generate",
     dependencies=[Depends(require_roles(UserRole.ADMIN))],
 )
-def trigger_ai_generation(req: TriggerAIRequest, user: User = Depends(get_current_user)):
+def trigger_ai_generation(req: TriggerAIRequest, user: User = Depends(get_current_user), repo: Repository = Depends(get_repository)):
     """Req 3.1, 3.2, 3.3, 7.2: AI Content Generator under human review."""
     admin_prof = next((p for p in user.userProfiles if isinstance(p, AdminProfile)), None)
     if not admin_prof:
         raise HTTPException(status_code=403, detail="المستخدم ليس مديراً")
 
-    res = admin_prof.triggerAIGeneration(req.passageId)
-    # Save generated questions to database
+    if req.passageId is None:
+        new_p = Passage(
+            text="نص تمهيدي مولد",
+            level=req.level or Level.B1,
+            topic=req.topic or "عام",
+            duration=timedelta(seconds=90),
+            origin=Origin.AI,
+            status=ContentStatus.DRAFT,
+        )
+        repo.save_passage(new_p)
+        target_pid = new_p.passageId
+    else:
+        target_pid = req.passageId
+
+    res = admin_prof.triggerAIGeneration(target_pid)
     for p in Passage._registry:
-        if p.passageId == req.passageId:
+        if p.passageId == target_pid:
             repo.save_passage(p)
+            res["topic"] = p.topic
             break
     return res
+
+
+@app.post(
+    "/api/admin/generate-passage",
+    dependencies=[Depends(require_roles(UserRole.ADMIN))],
+    include_in_schema=False,
+)
+def generate_passage_alias(req: TriggerAIRequest, user: User = Depends(get_current_user), repo: Repository = Depends(get_repository)):
+    """Alias for backwards compatibility with mobile client."""
+    return trigger_ai_generation(req, user, repo)
 
 
 @app.post(

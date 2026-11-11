@@ -69,7 +69,7 @@ class _AdminScreenState extends ConsumerState<AdminScreen> {
   void _triggerAiGeneration() async {
     final client = ref.read(apiClientProvider);
     try {
-      final resp = await client.dio.post('/api/admin/generate-passage', data: {
+      final resp = await client.dio.post('/api/admin/generate', data: {
         'topic': _aiTopicController.text.trim(),
         'level': _aiLevel,
       });
