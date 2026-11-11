@@ -55,12 +55,12 @@ class DeviceAudioRecorder implements AudioRecorderService {
 
   @override
   Future<String?> pickAudioFile() async {
-    final result = await FilePicker.platform.pickFiles(
+    final files = await FilePicker.pickFiles(
       type: FileType.custom,
       allowedExtensions: ['mp3', 'wav', 'm4a', 'aac', 'ogg'],
     );
-    if (result != null && result.files.isNotEmpty) {
-      return result.files.single.path;
+    if (files.isNotEmpty) {
+      return files.first.path;
     }
     return null;
   }
