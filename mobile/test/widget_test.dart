@@ -159,6 +159,16 @@ void main() {
       topic: 'تاريخ وحضارة',
       durationSeconds: 45.0,
       status: 'VERIFIED',
+      audioRecordings: [
+        AudioRecording(
+          recordingId: 'rec-test-1',
+          audioFile: 'sample_fusha_01.mp3',
+          audioUrl: '/api/audio/sample_fusha_01.mp3',
+          durationSeconds: 45.0,
+          status: 'VERIFIED',
+          attribution: 'SHOW_NAME',
+        ),
+      ],
     );
 
     await tester.pumpWidget(createTestableWidget(PracticeScreen(passage: passage)));
@@ -171,6 +181,7 @@ void main() {
     expect(find.text('ما هو المحور الرئيسي للنص؟'), findsOneWidget);
 
     // Select correct answer 'الحضارة'
+    await tester.ensureVisible(find.text('الحضارة'));
     await tester.tap(find.text('الحضارة'));
     for (int i = 0; i < 25; i++) {
       await tester.pump(const Duration(milliseconds: 50));

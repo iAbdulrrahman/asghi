@@ -81,6 +81,16 @@ void main() {
       topic: 'تاريخ وحضارة',
       durationSeconds: 60.0,
       status: 'VERIFIED',
+      audioRecordings: [
+        AudioRecording(
+          recordingId: 'rec-gold-1',
+          audioFile: 'sample_fusha_01.mp3',
+          audioUrl: '/api/audio/sample_fusha_01.mp3',
+          durationSeconds: 60.0,
+          status: 'VERIFIED',
+          attribution: 'SHOW_NAME',
+        ),
+      ],
     );
     await tester.pumpWidget(testableWidget(PracticeScreen(passage: passage)));
     await tester.pump();
