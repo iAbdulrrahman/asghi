@@ -201,19 +201,54 @@ class _ContributorScreenState extends ConsumerState<ContributorScreen> with Sing
                           label: const Text('بدء التسجيل'),
                           style: ElevatedButton.styleFrom(backgroundColor: AppConstants.primaryEmerald),
                           onPressed: () async {
-                            final tempDir = Directory.systemTemp;
-                            final targetPath = '${tempDir.path}/rec_${p.passageId}_${DateTime.now().millisecondsSinceEpoch}.wav';
-                            await recorder.startRecording(targetPath);
-                            setModalState(() {
-                              isRecording = true;
-                              elapsed = 0;
-                              validationError = null;
-                            });
-                            timer = Timer.periodic(const Duration(seconds: 1), (t) {
+                            try {
+                              final hasPerm = await recorder.hasPermission();
+                              if (!hasPerm) {
+                                final granted = await recorder.requestPermission();
+                                if (!granted) {
+                                  setModalState(() {
+                                    validationError = 'تعذر بدء التسجيل الصوتي';
+                                    isRecording = false;
+                                  });
+                                  if (mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('تعذر بدء التسجيل الصوتي'),
+                                        backgroundColor: AppConstants.errorRed,
+                                      ),
+                                    );
+                                  }
+                                  return;
+                                }
+                              }
+                              final tempDir = Directory.systemTemp;
+                              final targetPath = '${tempDir.path}/rec_${p.passageId}_${DateTime.now().millisecondsSinceEpoch}.wav';
+                              await recorder.startRecording(targetPath);
                               setModalState(() {
-                                elapsed++;
+                                isRecording = true;
+                                elapsed = 0;
+                                validationError = null;
                               });
-                            });
+                              timer = Timer.periodic(const Duration(seconds: 1), (t) {
+                                setModalState(() {
+                                  elapsed++;
+                                });
+                              });
+                            } catch (_) {
+                              setModalState(() {
+                                validationError = 'تعذر بدء التسجيل الصوتي';
+                                isRecording = false;
+                                elapsed = 0;
+                              });
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('تعذر بدء التسجيل الصوتي'),
+                                    backgroundColor: AppConstants.errorRed,
+                                  ),
+                                );
+                              }
+                            }
                           },
                         ),
                       ),
