@@ -44,17 +44,18 @@ void main() {
     }
 
     // Tab 1: Available passages
-    expect(find.text('نصوص بانتظار التسجيل'), findsOneWidget);
+    expect(find.text('نصوص للتسجيل'), findsOneWidget);
     expect(find.text('أدب ولغة'), findsOneWidget);
 
     // Switch to Tab 2: My Submissions
-    await tester.tap(find.text('تسجيلاتي السابقة'));
-    for (int i = 0; i < 10; i++) {
+    await tester.tap(find.text('تسجيلاتي وحالتها'));
+    for (int i = 0; i < 20; i++) {
       await tester.pump(const Duration(milliseconds: 50));
     }
 
     // Verify rejection reason and verified status appear (Req 8)
     expect(find.textContaining('سبب الرفض: وجود كلمات عامية غير فصيحة في التسجيل'), findsOneWidget);
-    expect(find.text('الحالة: VERIFIED'), findsOneWidget);
+    expect(find.text('معتمد ومنشور'), findsOneWidget);
+    expect(find.text('مرفوض'), findsOneWidget);
   });
 }
