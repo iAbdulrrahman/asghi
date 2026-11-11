@@ -1,3 +1,4 @@
+# Auto-discover Python and Flutter (supports Windows and Unix, even if Flutter is not on PATH)
 PYTHON ?= python
 ifeq ($(OS),Windows_NT)
   FLUTTER ?= $(shell where flutter 2>nul || echo C:/flutter/bin/flutter.bat)
