@@ -863,10 +863,27 @@ def get_learner_progress(user: User = Depends(get_current_user)):
     if not learner_prof:
         raise HTTPException(status_code=403, detail="المستخدم ليس متعلماً")
 
+    repo = get_repository()
+    completed = 0
+    try:
+        with repo._get_conn() as conn:
+            row = conn.execute(
+                "SELECT COUNT(*) as count FROM test_sessions WHERE learner_id = ? AND is_completed = 1;",
+                (str(learner_prof.userRoleProfileId),)
+            ).fetchone()
+            if row:
+                completed = row["count"]
+    except Exception:
+        pass
+
     return {
         "totalScore": learner_prof.progress.totalScore,
         "totalTimeSpent": learner_prof.progress.totalTimeSpent,
+        "listeningTimeSeconds": learner_prof.progress.totalTimeSpent,
         "currentStreakDays": learner_prof.progress.currentStreakDays,
+        "streak": learner_prof.progress.currentStreakDays,
+        "currentStreak": learner_prof.progress.currentStreakDays,
+        "completedTests": completed,
     }
 
 

@@ -17,6 +17,19 @@ class MockHttpAdapter implements HttpClientAdapter {
     final path = options.uri.path;
     final method = options.method.toUpperCase();
 
+    // GET /api/users/me
+    if (path.contains('/api/users/me')) {
+      final data = {
+        'userId': 'u-learner-1',
+        'displayName': 'أحمد المتعلم',
+        'arabicLevel': 'B1',
+        'roles': ['LEARNER'],
+      };
+      return ResponseBody.fromString(jsonEncode(data), 200, headers: {
+        Headers.contentTypeHeader: [Headers.jsonContentType],
+      });
+    }
+
     // GET awaiting recording
     if (path.contains('awaiting-recording')) {
       final data = [
