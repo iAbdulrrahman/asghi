@@ -1,8 +1,10 @@
+import io
+import wave
 """Content moderation and language compliance.
 Enforces Requirements 18.1 (Fusha only), 18.2 (halal/appropriate content), 12 (upload limit), and 19 (1-3 min duration).
 """
 import re
-from typing import Tuple, List
+from typing import Tuple, List, Optional
 
 # Inappropriate or vulgar patterns to reject (Req 18.2)
 PROHIBITED_TERMS = [
@@ -61,16 +63,28 @@ def check_fusha_compliance(text: str) -> Tuple[bool, str]:
     return True, ""
 
 
+def extract_audio_duration(file_bytes: bytes) -> Optional[float]:
+    """Parse audio duration in seconds from WAV/RIFF header if available."""
+    try:
+        with wave.open(io.BytesIO(file_bytes), "rb") as wf:
+            frames = wf.getnframes()
+            rate = wf.getframerate()
+            if rate > 0 and frames > 0:
+                return round(frames / float(rate), 2)
+    except Exception:
+        pass
+    return None
+
+
 def validate_audio_metadata(file_size_bytes: int, duration_seconds: float) -> Tuple[bool, str]:
-    """NFR 12 & 19: Check upload limit (25 MB) and duration guidelines (1-3 min target)."""
+    """NFR 12 & 19: Check upload limit (25 MB) and duration guidelines (60-180 seconds)."""
     max_bytes = 25 * 1024 * 1024  # 25 MB
     if file_size_bytes > max_bytes:
         return False, "حجم الملف يتجاوز الحد الأقصى المسموح به (25 ميغابايت)."
 
-    # Allow reasonable bounds for testing while checking target range
-    if duration_seconds < 10:
-        return False, "مدة التسجيل قصيرة جداً (الهدف الأساسي 1-3 دقائق)."
-    if duration_seconds > 600:
-        return False, "مدة التسجيل تتجاوز الحد الأقصى المسموح به."
+    if duration_seconds < 60.0:
+        return False, "مدة التسجيل قصيرة جداً (الهدف الأساسي 60 إلى 180 ثانية)."
+    if duration_seconds > 180.0:
+        return False, "مدة التسجيل تتجاوز الحد الأقصى المسموح به (180 ثانية)."
 
     return True, ""
