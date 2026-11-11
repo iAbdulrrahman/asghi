@@ -1,8 +1,13 @@
-# Auto-discover Python and Flutter (supports Windows and Unix, even if Flutter is not on PATH)
+# Auto-discover Python, Virtualenv, and Flutter (supports Windows and Unix)
 PYTHON ?= python
+
 ifeq ($(OS),Windows_NT)
+  VENV_DIR := .venv
+  VENV_PY := $(VENV_DIR)/Scripts/python.exe
   FLUTTER ?= $(shell where flutter 2>nul || echo C:/flutter/bin/flutter.bat)
 else
+  VENV_DIR := .venv
+  VENV_PY := $(VENV_DIR)/bin/python
   FLUTTER ?= $(shell command -v flutter 2>/dev/null || echo /c/flutter/bin/flutter.bat)
 endif
 
@@ -10,34 +15,37 @@ endif
 
 help:
 	@echo "Available targets:"
-	@echo "  make setup        - Install backend dependencies and resolve mobile packages"
-	@echo "  make check        - Run all verification checks (install, seed, live e2e, backend tests, mobile tests)"
+	@echo "  make setup        - Create virtualenv (.venv), install backend dependencies, and resolve mobile packages"
+	@echo "  make check        - Run hermetic verification checks (setup, seed, live e2e, backend tests, mobile tests)"
 	@echo "  make seed         - Seed the SQLite database with test data"
-	@echo "  make test-backend - Run the pytest suite and restart verification"
-	@echo "  make test-live    - Run live end-to-end multi-role server integration tests"
+	@echo "  make test-backend - Run the pytest suite and restart verification using .venv"
+	@echo "  make test-live    - Run live end-to-end multi-role server integration tests using .venv"
 	@echo "  make test-mobile  - Run flutter analyze and flutter test"
 
-setup:
-	$(PYTHON) -m pip install -r requirements.txt
+$(VENV_PY):
+	$(PYTHON) -m venv $(VENV_DIR)
+	$(VENV_PY) -m pip install -r requirements.txt
+
+setup: $(VENV_PY)
+	$(VENV_PY) -m pip install -r requirements.txt
 	cd mobile && $(FLUTTER) pub get
 
-seed:
-	$(PYTHON) seed.py
+seed: setup
+	$(VENV_PY) seed.py
 
-test-live:
-	$(PYTHON) scripts/e2e.py
+test-live: setup
+	$(VENV_PY) scripts/e2e.py
 
-test-backend:
-	$(PYTHON) -m pytest
-	$(PYTHON) tests/test_fix_4_seed_restart.py
+test-backend: setup
+	$(VENV_PY) -m pytest
+	$(VENV_PY) -m pytest tests/test_fix_4_seed_restart.py
 
 test-mobile:
 	cd mobile && $(FLUTTER) analyze && $(FLUTTER) test
 
-check:
-	$(PYTHON) -m pip install -r requirements.txt
-	$(PYTHON) seed.py
-	$(PYTHON) scripts/e2e.py
-	$(PYTHON) -m pytest
-	$(PYTHON) tests/test_fix_4_seed_restart.py
+check: setup
+	$(VENV_PY) seed.py
+	$(VENV_PY) scripts/e2e.py
+	$(VENV_PY) -m pytest
+	$(VENV_PY) -m pytest tests/test_fix_4_seed_restart.py
 	cd mobile && $(FLUTTER) analyze && $(FLUTTER) test
