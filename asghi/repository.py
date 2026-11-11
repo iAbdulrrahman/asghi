@@ -917,17 +917,18 @@ class Repository:
                         "UPDATE questions SET status = ?, rejection_reason = ? WHERE question_id = ?;",
                         (new_status, effective_reason if new_status == "REJECTED" else None, content_id)
                     )
-                    conn.execute(
-                        "UPDATE passages SET status = ?, rejection_reason = ? WHERE passage_id = ?;",
-                        (new_status, effective_reason if new_status == "REJECTED" else None, content_id)
-                    )
-
                     parent_row = conn.execute(
                         "SELECT passage_id, author_id FROM audio_recordings WHERE recording_id = ?;",
                         (content_id,)
                     ).fetchone()
                     parent_pid = parent_row["passage_id"] if parent_row else content_id
                     author_id = parent_row["author_id"] if parent_row else None
+
+                    passage_status = "VERIFIED" if new_status == "VERIFIED" else "DRAFT"
+                    conn.execute(
+                        "UPDATE passages SET status = ?, rejection_reason = ? WHERE passage_id = ?;",
+                        (passage_status, effective_reason if new_status == "REJECTED" else None, parent_pid)
+                    )
 
                     conn.execute("UPDATE passages SET claimed_by = NULL, claimed_at = NULL WHERE passage_id = ?;", (parent_pid,))
                     conn.execute("DELETE FROM active_claims WHERE passage_id = ?;", (parent_pid,))
