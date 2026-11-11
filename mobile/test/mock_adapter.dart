@@ -252,6 +252,38 @@ class MockHttpAdapter implements HttpClientAdapter {
       });
     }
 
+    // GET /api/admin/flags
+    if (path.contains('/api/admin/flags') && method == 'GET') {
+      final data = [
+        {
+          'flagId': 'flag-1',
+          'contentId': 'content-101',
+          'contentType': 'PASSAGE',
+          'reason': 'محتوى غير لائق يتطلب مراجعة المشرف',
+          'status': 'PENDING',
+        }
+      ];
+      return ResponseBody.fromString(jsonEncode(data), 200, headers: {
+        Headers.contentTypeHeader: [Headers.jsonContentType],
+      });
+    }
+
+    // POST /api/admin/flags/{flagId}/resolve
+    if (path.contains('/api/admin/flags/') && path.contains('/resolve') && method == 'POST') {
+      final data = {'message': 'تمت معالجة البلاغ بنجاح', 'flagId': 'flag-1', 'newState': 'RESOLVED_NO_ACTION'};
+      return ResponseBody.fromString(jsonEncode(data), 200, headers: {
+        Headers.contentTypeHeader: [Headers.jsonContentType],
+      });
+    }
+
+    // POST /api/admin/disputes/{contentId}/resolve
+    if (path.contains('/api/admin/disputes/') && path.contains('/resolve') && method == 'POST') {
+      final data = {'message': 'تم حل النزاع بنجاح', 'contentId': 'content-101', 'verdict': 'VERIFY'};
+      return ResponseBody.fromString(jsonEncode(data), 200, headers: {
+        Headers.contentTypeHeader: [Headers.jsonContentType],
+      });
+    }
+
     // GET /api/admin/dashboard
     if (path.contains('/api/admin/dashboard')) {
       final data = {
