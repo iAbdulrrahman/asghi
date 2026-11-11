@@ -59,7 +59,14 @@ def test_seed_warns_on_defaults_in_non_dev(tmp_path, monkeypatch, caplog):
     ), "A security warning must be logged when defaults are seeded into non-development environment"
 
 
+def test_seed_alias_and_export():
+    import asghi.seed
+    assert hasattr(asghi.seed, "seed")
+    assert asghi.seed.seed is asghi.seed.seed_database
+
+
 def test_readme_documents_credential_rotation():
+
     readme_path = os.path.join(os.path.dirname(__file__), "..", "README.md")
     with open(readme_path, "r", encoding="utf-8") as f:
         readme = f.read()
