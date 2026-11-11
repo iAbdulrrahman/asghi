@@ -59,12 +59,13 @@ class Repository:
             conn.execute("PRAGMA foreign_keys = OFF;")
             conn.execute("DELETE FROM content_flags;")
             conn.execute("DELETE FROM review_assignments;")
+            conn.execute("DELETE FROM question_responses;")
+            conn.execute("DELETE FROM test_sessions;")
             conn.execute("DELETE FROM questions;")
             conn.execute("DELETE FROM audio_recordings;")
             conn.execute("DELETE FROM passages;")
             conn.execute("DELETE FROM user_profiles;")
             conn.execute("DELETE FROM users;")
-            conn.execute("DELETE FROM test_sessions;")
             conn.execute("PRAGMA foreign_keys = ON;")
 
 
@@ -186,6 +187,17 @@ class Repository:
                 finished_at TEXT,
                 total_score INTEGER,
                 current_difficulty TEXT
+            );
+
+            CREATE TABLE IF NOT EXISTS question_responses (
+                response_id TEXT PRIMARY KEY,
+                session_id TEXT,
+                question_id TEXT,
+                submitted_answer TEXT,
+                is_correct INTEGER,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (session_id) REFERENCES test_sessions(session_id) ON DELETE CASCADE,
+                FOREIGN KEY (question_id) REFERENCES questions(question_id)
             );
             """)
 
@@ -401,6 +413,57 @@ class Repository:
                 flag.status.value,
             ))
 
+    def save_review_assignment(self, r: ReviewAssignment) -> None:
+        """Persist review assignment and feedback."""
+        with self._get_conn() as conn:
+            self._save_review_assignment_conn(conn, r)
+
+    def save_test_session(self, session: TestSession) -> None:
+        """Persist learner test session to SQLite."""
+        with self._get_conn() as conn:
+            conn.execute("""
+            INSERT INTO test_sessions (
+                session_id, passage_id, learner_id, started_at, finished_at, total_score, current_difficulty
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(session_id) DO UPDATE SET
+                finished_at=excluded.finished_at,
+                total_score=excluded.total_score,
+                current_difficulty=excluded.current_difficulty;
+            """, (
+                str(session.sessionId),
+                str(session.passageId),
+                str(session.learnerId) if session.learnerId else None,
+                session.startedAt.isoformat() if session.startedAt else None,
+                session.finishedAt.isoformat() if session.finishedAt else None,
+                session.totalScore,
+                session.currentDifficulty.value if hasattr(session.currentDifficulty, "value") else str(session.currentDifficulty),
+            ))
+            for qr in session.questionResponses:
+                self._save_question_response_conn(conn, session.sessionId, qr)
+
+    def save_question_response(self, session_id: UUID, qr: QuestionResponse) -> None:
+        """Persist individual question response to SQLite."""
+        with self._get_conn() as conn:
+            self._save_question_response_conn(conn, session_id, qr)
+
+    def _save_question_response_conn(self, conn: sqlite3.Connection, session_id: UUID, qr: QuestionResponse) -> None:
+        conn.execute("""
+        INSERT INTO question_responses (
+            response_id, session_id, question_id, submitted_answer, is_correct
+        )
+        VALUES (?, ?, ?, ?, ?)
+        ON CONFLICT(response_id) DO UPDATE SET
+            submitted_answer=excluded.submitted_answer,
+            is_correct=excluded.is_correct;
+        """, (
+            str(qr.responseId),
+            str(session_id),
+            str(qr.questionId),
+            qr.submittedAnswer,
+            1 if qr.isCorrect else 0,
+        ))
+
     def sync_all_to_db(self) -> None:
         """Persist all in-memory domain objects to SQLite."""
         for u in User._registry:
@@ -420,6 +483,7 @@ class Repository:
         """Hydrate domain registries from SQLite database."""
         User._registry.clear()
         Passage._registry.clear()
+        ReviewableContent._registry.clear()
 
         with self._get_conn() as conn:
             user_rows = conn.execute("SELECT * FROM users;").fetchall()
@@ -524,6 +588,48 @@ class Repository:
                         status=FlagStatus(fr["status"]),
                     )
                     p.flags.append(flag)
+
+            # Hydrate review assignments onto content
+            rev_rows = conn.execute("SELECT * FROM review_assignments;").fetchall()
+            for r_row in rev_rows:
+                c_id = UUID(r_row["content_id"])
+                target_c = None
+                for p in Passage._registry:
+                    if p.contentId == c_id:
+                        target_c = p
+                        break
+                    for rec in p.audioRecordings:
+                        if rec.contentId == c_id:
+                            target_c = rec
+                            break
+                    for q in p.questions:
+                        if q.contentId == c_id:
+                            target_c = q
+                            break
+                if not target_c:
+                    for item in ReviewableContent._registry:
+                        if item.contentId == c_id:
+                            target_c = item
+                            break
+
+                assignment = ReviewAssignment(
+                    reviewerId=UUID(r_row["reviewer_id"]),
+                    contentId=c_id,
+                    isSpecialistReview=bool(r_row["is_specialist"]),
+                    reviewId=UUID(r_row["review_id"]),
+                    createdAt=datetime.fromisoformat(r_row["created_at"]) if r_row["created_at"] else None,
+                )
+                assignment.isApproved = True if r_row["is_approved"] == 1 else (False if r_row["is_approved"] == 0 else None)
+                assignment.reason = r_row["reason"]
+                assignment.feedback = ReviewFeedback(
+                    isFusha=bool(r_row["is_fusha"]),
+                    dialectFree=bool(r_row["dialect_free"]),
+                    audioQuality=r_row["audio_quality"],
+                    feedback=r_row["feedback_text"] or "",
+                )
+                if target_c and not any(ra.reviewId == assignment.reviewId for ra in target_c.reviews):
+                    target_c.reviews.append(assignment)
+
 
     def _hydrate_user(self, conn: sqlite3.Connection, ur: sqlite3.Row) -> User:
         for u in User._registry:
