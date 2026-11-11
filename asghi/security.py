@@ -95,6 +95,46 @@ def get_current_user(
     )
 
 
+def get_current_user_from_header_or_query(
+    token: Optional[str] = None,
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(bearer_scheme),
+) -> User:
+    """Extract authenticated user from either Authorization: Bearer header or ?token= query parameter."""
+    raw_token = credentials.credentials if (credentials and credentials.credentials) else token
+    if not raw_token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Missing authentication credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    payload = decode_access_token(raw_token)
+    if not payload or "sub" not in payload:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired authentication token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    user_id_str = payload["sub"]
+    from asghi.repository import get_repository
+    try:
+        user_uuid = UUID(user_id_str)
+        user = get_repository().get_user_by_id(user_uuid)
+        if user:
+            return user
+    except ValueError:
+        pass
+
+    for u in User._registry:
+        if str(u.userId) == user_id_str:
+            return u
+
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="User not found",
+    )
+
+
 def require_roles(*allowed_roles: UserRole) -> Callable[[User], User]:
     """FastAPI dependency factory to gate endpoints strictly to actor roles per h_uc.puml."""
     def role_checker(user: User = Depends(get_current_user)) -> User:

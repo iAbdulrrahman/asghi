@@ -118,9 +118,10 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
 
   String _resolveAudioUrl(AudioRecording? rec) {
     if (rec == null) return '';
+    final token = ApiClient().inMemoryToken;
     final url = rec.audioUrl ?? '';
-    if (url.isNotEmpty) return AppConstants.resolveAudioUrl(url);
-    if (rec.audioFile.isNotEmpty) return AppConstants.resolveAudioUrl(rec.audioFile);
+    if (url.isNotEmpty) return AppConstants.resolveAudioUrl(url, token: token);
+    if (rec.audioFile.isNotEmpty) return AppConstants.resolveAudioUrl(rec.audioFile, token: token);
     return '';
   }
 

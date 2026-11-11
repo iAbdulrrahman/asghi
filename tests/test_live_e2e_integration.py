@@ -290,7 +290,7 @@ def test_live_server_full_e2e_all_flows(tmp_path):
         assert len(matching) == 1
 
         # Stream audio via GET /api/audio/{filename}
-        audio_stream_res = client.get(f"/api/audio/{rec_filename}")
+        audio_stream_res = client.get(f"/api/audio/{rec_filename}", headers=rev_headers)
         assert audio_stream_res.status_code == 200
         assert len(audio_stream_res.content) == expected_size
 

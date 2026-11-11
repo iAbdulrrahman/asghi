@@ -52,6 +52,7 @@ from asghi.repository import Repository, get_repository
 from asghi.security import (
     create_access_token,
     get_current_user,
+    get_current_user_from_header_or_query,
     require_roles,
 )
 from asghi.moderation import (
@@ -1259,7 +1260,11 @@ def get_admin_report(period: str = "ALL_TIME", user: User = Depends(get_current_
 
 # --- Static Audio Serving ---
 @app.get("/api/audio/{filename}")
-def get_audio_file(filename: str):
+def get_audio_file(
+    filename: str,
+    token: Optional[str] = None,
+    user: User = Depends(get_current_user_from_header_or_query),
+):
     """Audio streaming endpoint."""
     path = os.path.join(UPLOAD_DIR, filename)
     if os.path.exists(path):
