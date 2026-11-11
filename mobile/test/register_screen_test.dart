@@ -40,7 +40,7 @@ void main() {
     expect(find.text('إنشاء حساب جديد'), findsOneWidget);
     expect(find.text('البريد الإلكتروني أو رقم الهاتف'), findsOneWidget);
     expect(find.text('كلمة المرور'), findsOneWidget);
-    expect(find.text('الاسم الظاهر'), findsOneWidget);
-    expect(find.text('تسجيل وإكمال الحساب'), findsOneWidget);
+    expect(find.text('الاسم المعروض'), findsOneWidget);
+    expect(find.text('تسجيل الحساب'), findsOneWidget);
   });
 }
