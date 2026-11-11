@@ -55,6 +55,7 @@ from asghi.security import (
     require_roles,
 )
 from asghi.moderation import (
+    extract_audio_duration,
     check_content_guidelines,
     check_fusha_compliance,
     validate_audio_metadata,
@@ -483,10 +484,13 @@ async def submit_audio(
     if not contributor_prof:
         raise HTTPException(status_code=403, detail="المستخدم ليس مساهماً")
 
-    # Read and validate file size (NFR 12)
+    # Read and validate file size and duration (NFR 12, Req 19, Finding 15)
     file_bytes = await file.read()
     file_size = len(file_bytes)
-    valid, err_msg = validate_audio_metadata(file_size, durationSeconds)
+    derived_duration = extract_audio_duration(file_bytes)
+    actual_duration = derived_duration if derived_duration is not None else durationSeconds
+
+    valid, err_msg = validate_audio_metadata(file_size, actual_duration)
     if not valid:
         raise HTTPException(status_code=400, detail=err_msg)
 
@@ -510,7 +514,7 @@ async def submit_audio(
     try:
         rec = target_p.addAudio(
             audioFile=saved_filename,
-            duration=timedelta(seconds=durationSeconds),
+            duration=timedelta(seconds=actual_duration),
             attribution=attribution,
             authorId=user.userId,
         )
