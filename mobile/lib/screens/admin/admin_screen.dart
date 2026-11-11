@@ -83,11 +83,12 @@ class _AdminScreenState extends ConsumerState<AdminScreen> with SingleTickerProv
   Future<void> _loadFlags() async {
     final client = ref.read(apiClientProvider);
     try {
-      final resp = await client.dio.get('/api/admin/flags');
+      final resp = await client.dio.get('/api/admin/flags', queryParameters: {'status': 'PENDING'});
       final raw = ApiClient.parseData(resp.data);
       if (mounted) {
         setState(() {
-          _flaggedItems = (raw as List<dynamic>?) ?? [];
+          final list = (raw as List<dynamic>?) ?? [];
+          _flaggedItems = list.where((f) => (f['status'] ?? 'PENDING') == 'PENDING').toList();
         });
       }
     } catch (_) {}
@@ -103,8 +104,8 @@ class _AdminScreenState extends ConsumerState<AdminScreen> with SingleTickerProv
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('تمت معالجة البلاغ بنجاح'), backgroundColor: AppConstants.successGreen),
         );
-        _loadFlags();
-        _loadDashboard();
+        await _loadFlags();
+        await _loadDashboard();
       }
     } catch (e) {
       if (mounted) {
