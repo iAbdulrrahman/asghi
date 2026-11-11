@@ -1,7 +1,10 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/constants.dart';
+import '../providers/providers.dart';
 
-class AudioPlayerWidget extends StatefulWidget {
+class AudioPlayerWidget extends ConsumerStatefulWidget {
   final String audioUrl;
   final ValueChanged<double>? onSpeedChanged;
 
@@ -12,30 +15,77 @@ class AudioPlayerWidget extends StatefulWidget {
   });
 
   @override
-  State<AudioPlayerWidget> createState() => _AudioPlayerWidgetState();
+  ConsumerState<AudioPlayerWidget> createState() => _AudioPlayerWidgetState();
 }
 
-class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
+class _AudioPlayerWidgetState extends ConsumerState<AudioPlayerWidget> {
+  StreamSubscription? _posSub;
+  StreamSubscription? _playSub;
+  StreamSubscription? _speedSub;
+
+  Duration _position = Duration.zero;
+  Duration _duration = const Duration(seconds: 60);
   bool _isPlaying = false;
   double _currentSpeed = 1.0;
-  double _position = 0.0;
-  final double _duration = 60.0;
 
-  void _togglePlay() {
-    setState(() {
-      _isPlaying = !_isPlaying;
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initPlayer();
     });
   }
 
-  void _setSpeed(double speed) {
-    setState(() {
-      _currentSpeed = speed;
+  void _initPlayer() async {
+    final player = ref.read(audioPlaybackProvider);
+    await player.load(widget.audioUrl);
+    _posSub = player.positionStream.listen((pos) {
+      if (mounted) setState(() => _position = pos);
     });
+    player.durationStream.listen((dur) {
+      if (mounted && dur != null) setState(() => _duration = dur);
+    });
+    _playSub = player.playingStream.listen((playing) {
+      if (mounted) setState(() => _isPlaying = playing);
+    });
+    _speedSub = player.speedStream.listen((speed) {
+      if (mounted) setState(() => _currentSpeed = speed);
+    });
+  }
+
+  @override
+  void dispose() {
+    _posSub?.cancel();
+    _playSub?.cancel();
+    _speedSub?.cancel();
+    super.dispose();
+  }
+
+  void _togglePlay() {
+    final player = ref.read(audioPlaybackProvider);
+    if (_isPlaying) {
+      player.pause();
+    } else {
+      player.play();
+    }
+  }
+
+  void _setSpeed(double speed) {
+    final player = ref.read(audioPlaybackProvider);
+    player.setSpeed(speed);
     widget.onSpeedChanged?.call(speed);
+  }
+
+  void _seek(double seconds) {
+    final player = ref.read(audioPlaybackProvider);
+    player.seek(Duration(seconds: seconds.toInt()));
   }
 
   @override
   Widget build(BuildContext context) {
+    final durationSeconds = _duration.inSeconds > 0 ? _duration.inSeconds.toDouble() : 60.0;
+    final positionSeconds = _position.inSeconds.toDouble().clamp(0.0, durationSeconds);
+
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -46,6 +96,7 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
             Row(
               children: [
                 IconButton(
+                  key: const Key('playPauseButton'),
                   iconSize: 42,
                   color: AppConstants.primaryEmerald,
                   icon: Icon(_isPlaying ? Icons.pause_circle_filled : Icons.play_circle_filled),
@@ -53,19 +104,15 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
                 ),
                 Expanded(
                   child: Slider(
-                    value: _position,
-                    max: _duration,
+                    value: positionSeconds,
+                    max: durationSeconds,
                     activeColor: AppConstants.primaryEmerald,
                     inactiveColor: Colors.grey.shade300,
-                    onChanged: (val) {
-                      setState(() {
-                        _position = val;
-                      });
-                    },
+                    onChanged: _seek,
                   ),
                 ),
                 Text(
-                  '${_position.toInt()}ث / ${_duration.toInt()}ث',
+                  '${_position.inSeconds}ث / ${_duration.inSeconds}ث',
                   style: const TextStyle(fontSize: 12, color: Colors.grey),
                 ),
               ],
@@ -77,8 +124,8 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
                 const Text('سرعة الصوت: ', style: TextStyle(fontSize: 13)),
                 Wrap(
                   spacing: 8,
-                  children: [0.75, 1.0, 1.25].map((s) {
-                    final isSelected = _currentSpeed == s;
+                  children: [0.75, 1.0, 1.25, 1.5].map((s) {
+                    final isSelected = (_currentSpeed - s).abs() < 0.01;
                     return ChoiceChip(
                       label: Text('${s}x'),
                       selected: isSelected,

@@ -1,6 +1,8 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/api_client.dart';
+import '../core/audio_playback_service.dart';
+import '../core/audio_recorder_service.dart';
 import '../models/models.dart';
 
 // --- Auth State ---
@@ -171,3 +173,7 @@ final cataloguePassagesProvider = FutureProvider<List<Passage>>((ref) async {
   final list = (resp.data as List<dynamic>?) ?? [];
   return list.map((item) => Passage.fromJson(item as Map<String, dynamic>)).toList();
 });
+
+
+final audioRecorderProvider = Provider<AudioRecorderService>((ref) => DeviceAudioRecorder());
+final audioPlaybackProvider = Provider<AudioPlaybackService>((ref) => JustAudioPlaybackService());

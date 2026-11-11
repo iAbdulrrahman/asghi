@@ -17,8 +17,8 @@ class MockHttpAdapter implements HttpClientAdapter {
     final path = options.uri.path;
     final method = options.method.toUpperCase();
 
-    // GET /api/passages/awaiting-recording
-    if (path.contains('/api/passages/awaiting-recording')) {
+    // GET awaiting recording
+    if (path.contains('awaiting-recording')) {
       final data = [
         {
           'passageId': 'p-awaiting-1',
@@ -31,6 +31,39 @@ class MockHttpAdapter implements HttpClientAdapter {
           'questionsCount': 2,
         }
       ];
+      return ResponseBody.fromString(jsonEncode(data), 200, headers: {
+        Headers.contentTypeHeader: [Headers.jsonContentType],
+      });
+    }
+
+    // GET /api/contributor/submissions
+    if (path.contains('/api/contributor/submissions')) {
+      final data = [
+        {
+          'recordingId': 'rec-sub-1',
+          'passageTopic': 'أدب ولغة',
+          'status': 'VERIFIED',
+          'feedback': 'قراءة فصيحة ومتقنة',
+        },
+        {
+          'recordingId': 'rec-sub-2',
+          'passageTopic': 'تاريخ',
+          'status': 'REJECTED',
+          'rejectionReason': 'وجود كلمات عامية غير فصيحة في التسجيل',
+        }
+      ];
+      return ResponseBody.fromString(jsonEncode(data), 200, headers: {
+        Headers.contentTypeHeader: [Headers.jsonContentType],
+      });
+    }
+
+    // POST /api/contributor/submit-audio
+    if (path.contains('/api/contributor/submit-audio')) {
+      final data = {
+        'message': 'تم استلام الملف الصوتي بنجاح',
+        'recordingId': 'rec-new-1',
+        'status': 'PENDING_REVIEW',
+      };
       return ResponseBody.fromString(jsonEncode(data), 200, headers: {
         Headers.contentTypeHeader: [Headers.jsonContentType],
       });
@@ -58,6 +91,20 @@ class MockHttpAdapter implements HttpClientAdapter {
           'questionsCount': 3,
         }
       ];
+      return ResponseBody.fromString(jsonEncode(data), 200, headers: {
+        Headers.contentTypeHeader: [Headers.jsonContentType],
+      });
+    }
+
+    // GET /api/learner/progress
+    if (path.contains('/api/learner/progress')) {
+      final data = {
+        'totalScore': 150,
+        'completedTests': 5,
+        'currentStreak': 3,
+        'listeningTimeSeconds': 1800,
+        'levelProgression': {'A1': 100, 'A2': 80, 'B1': 40},
+      };
       return ResponseBody.fromString(jsonEncode(data), 200, headers: {
         Headers.contentTypeHeader: [Headers.jsonContentType],
       });
@@ -119,6 +166,65 @@ class MockHttpAdapter implements HttpClientAdapter {
     // POST /api/contributor/claim
     if (path.contains('/api/contributor/claim') && method == 'POST') {
       final data = {'message': 'تم حجز النص بنجاح لتسجيل الصوت', 'passageId': 'p-awaiting-1'};
+      return ResponseBody.fromString(jsonEncode(data), 200, headers: {
+        Headers.contentTypeHeader: [Headers.jsonContentType],
+      });
+    }
+
+    // GET /api/reviewer/pending-recordings
+    if (path.contains('/api/reviewer/pending-recordings')) {
+      final data = [
+        {
+          'recordingId': 'rec-pending-1',
+          'passageId': 'p-test-1',
+          'topic': 'أدب عربي',
+          'audioFile': '/audio/test.mp3',
+          'durationSeconds': 90.0,
+          'status': 'PENDING_REVIEW',
+        }
+      ];
+      return ResponseBody.fromString(jsonEncode(data), 200, headers: {
+        Headers.contentTypeHeader: [Headers.jsonContentType],
+      });
+    }
+
+    // GET /api/reviewer/pending-questions
+    if (path.contains('/api/reviewer/pending-questions')) {
+      final data = [
+        {
+          'questionId': 'q-pending-1',
+          'promptText': 'سؤال للمراجعة: ما الفكرة العامة؟',
+          'difficulty': 'MEDIUM',
+          'status': 'PENDING_REVIEW',
+        }
+      ];
+      return ResponseBody.fromString(jsonEncode(data), 200, headers: {
+        Headers.contentTypeHeader: [Headers.jsonContentType],
+      });
+    }
+
+    // GET /api/admin/dashboard
+    if (path.contains('/api/admin/dashboard')) {
+      final data = {
+        'totalUsers': 120,
+        'totalPassages': 45,
+        'verifiedRecordings': 30,
+        'pendingFlags': 2,
+        'activeClaims': 4,
+      };
+      return ResponseBody.fromString(jsonEncode(data), 200, headers: {
+        Headers.contentTypeHeader: [Headers.jsonContentType],
+      });
+    }
+
+    // GET /api/admin/report
+    if (path.contains('/api/admin/report')) {
+      final data = {
+        'period': 'MONTHLY',
+        'totalUsers': 120,
+        'passagesByStatus': {'VERIFIED': 30, 'DRAFT': 10, 'PENDING': 5},
+        'reviewTurnaroundHours': 4.2,
+      };
       return ResponseBody.fromString(jsonEncode(data), 200, headers: {
         Headers.contentTypeHeader: [Headers.jsonContentType],
       });
