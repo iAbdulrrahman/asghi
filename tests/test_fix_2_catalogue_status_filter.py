@@ -88,6 +88,10 @@ def test_browse_filters_unverified_and_requires_verified_audio(tmp_path):
     Passage._registry.append(p_flagged)
 
     with TestClient(app) as client:
+        # Re-clear after startup reload to test exact memory/registry query behavior
+        Passage._registry.clear()
+        Passage._registry.extend([p_draft, p_claimed, p_pending, p_no_audio, p_verified, p_flagged])
+
         # Default browse: must return ONLY p_verified
         resp = client.get("/api/passages")
         assert resp.status_code == 200
