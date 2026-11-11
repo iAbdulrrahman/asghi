@@ -30,7 +30,8 @@ void main() {
           ),
         ),
       );
-      await tester.pumpAndSettle();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
 
       final tabBarFinder = find.byType(TabBar);
       expect(tabBarFinder, findsOneWidget);
@@ -55,7 +56,8 @@ void main() {
           ),
         ),
       );
-      await tester.pumpAndSettle();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
 
       final tabBarFinder = find.byType(TabBar);
       expect(tabBarFinder, findsOneWidget);
@@ -66,8 +68,8 @@ void main() {
       expect(tabBar.unselectedLabelColor, equals(Colors.white70));
       expect(tabBar.indicatorColor, equals(AppConstants.accentGold));
 
-      expect(find.text('تسجيلات صوتية'), findsOneWidget);
-      expect(find.text('أسئلة الفهم'), findsOneWidget);
+      expect(find.text('تدقيق التسجيلات'), findsOneWidget);
+      expect(find.text('تدقيق الأسئلة'), findsOneWidget);
     });
 
     testWidgets('AdminScreen TabBar has fixed height, white selected label, and gold indicator', (tester) async {
@@ -79,7 +81,8 @@ void main() {
           ),
         ),
       );
-      await tester.pumpAndSettle();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
 
       final tabBarFinder = find.byType(TabBar);
       expect(tabBarFinder, findsOneWidget);
@@ -90,9 +93,9 @@ void main() {
       expect(tabBar.unselectedLabelColor, equals(Colors.white70));
       expect(tabBar.indicatorColor, equals(AppConstants.accentGold));
 
-      expect(find.text('المؤشرات'), findsOneWidget);
-      expect(find.text('البلاغات'), findsOneWidget);
-      expect(find.text('التقارير'), findsOneWidget);
+      expect(find.text('لوحة المؤشرات'), findsOneWidget);
+      expect(find.text('البلاغات والنزاعات'), findsOneWidget);
+      expect(find.text('توليد المحتوى'), findsOneWidget);
     });
   });
 }
