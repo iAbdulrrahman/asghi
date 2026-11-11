@@ -85,3 +85,31 @@ The mobile client is built inside `mobile/` targeting Android and iOS with pure 
 - **Total Python Tests**: 89 passed (`python -m pytest`)
 - **Total Flutter Tests**: 5 passed (`flutter test`)
 - **Combined Automated Verification**: Executable via `make check`
+
+---
+
+## 5. Audit Reconciliation: Previous Defects, Changes, and Uncovered Scope
+
+### What the Previous Run Got Wrong
+1. **False Durability**: Relied entirely on in-memory `_registry` class variables. `load_all_from_db()` was never invoked during server startup, causing any fresh process to fail authentication (HTTP 401).
+2. **Missing Relational Entities**: `test_sessions` and `question_responses` were never persisted in SQLite. Review assignments and feedback records were discarded on shutdown, leaving content marked `VERIFIED` without quorum evidence.
+3. **Concurrency Races & Claim Escapes**: Claiming was non-atomic (read-then-write), permitting concurrent double claims. Claims could be refreshed indefinitely by the claimant to avoid the 72h TTL. `releaseClaim()` erroneously transitioned passages to `VERIFIED`.
+4. **Unverified Content Leakage**: `Passage.getQuestion()` fell back to unverified draft questions when no verified questions matched a tier, violating Requirement 7.3.
+5. **Cosmetic NFR Claims**: Requirements 11–21 were previously marked `DONE` based solely on trivial string assertions (`assert '<header>' in html`, single `/healthz` probe, sequential requests).
+6. **No Environment Configuration**: `SECRET_KEY` was hardcoded, and neither `requirements.txt` nor `pubspec.lock` existed.
+7. **Simulated Mobile Client**: The previous codebase lacked an authentic mobile implementation and the Flutter SDK.
+
+### What Changed in this Iteration
+1. **Complete Durability & Hydration (P0)**: Repository rehydrates from SQLite during FastAPI lifespan startup. All domain entities, sessions, responses, assignments, and flags are fully persisted in SQLite with cascading foreign keys and check constraints.
+2. **Strict Transactional Boundaries (P1)**: Atomic conditional `UPDATE` on claims returning 409 Conflict; background claim expiration sweeper; atomic multi-table `BEGIN IMMEDIATE` transactions for verdicts (`submit_verdict_tx`), answers (`record_answer_tx`), and flags (`resolve_flag_tx`).
+3. **Domain Correctness & Hardened Security (P2)**: `Passage.getQuestion()` returns strictly `VERIFIED` questions; `SECRET_KEY` loaded from environment with production fail-fast.
+4. **P3 Verification Suite**: 8 targeted tests proving every fix would have caught the defect on master before merging.
+5. **Native Flutter Mobile Client (P4)**: Flutter 3.47.0 bootstrap, Riverpod state, Dio HTTP client, full Arabic RTL, 4-role screen flows, and debug APK artifact (`mobile/build/app/outputs/flutter-apk/app-debug.apk`).
+6. **Honest Reporting**: NFRs honestly rewritten to `PARTIAL` with specific notes on unbenchmarked production conditions; route count verified and reconciled to 38 application routes.
+
+### What Remains Uncovered
+- **iOS Compilation**: `mobile/ios/` is scaffolded and tracked, but compilation is `BLOCKED-BY-PLATFORM: macOS required to build iOS target`.
+- **Large-Scale Load Benchmarking**: NFR 13 (<50ms at 95th percentile) and NFR 14 (concurrent users) are verified locally under unit loads, but multi-node production load testing remains pending.
+- **Offline Sync Engine**: Requirement 6.8 local database sync is marked `OUT-OF-SCOPE` per specification definition of done (packaged download manifest provided).
+- **Payment Gateway**: NFR 21 contributor compensation ledger tracks credits, but third-party banking disbursement is not integrated.
+

@@ -46,23 +46,23 @@
 | 10.1 | DONE | `asghi/domain/reputation.py::Reputation`, `GET /api/users/{id}/reputation` | `tests/test_admin_api.py::test_contributor_and_reviewer_reputation` |
 | 10.2 | DONE | `asghi/domain/admin_profile.py::AdminProfile`, `GET /api/admin/dashboard`, `GET /api/admin/report` | `tests/test_admin_api.py::test_admin_dashboard_and_reporting` |
 | 11 | DONE | Native Flutter Mobile Client (`mobile/lib/main.dart`, `mobile/lib/screens/home_screen.dart`) & responsive viewport in `asghi/static/index.html` | `mobile/test/widget_test.dart::Full learner practice session`, `tests/test_nfr.py::test_nfr11_mobile_responsive_contract` |
-| 12 | DONE | Audio upload handling up to 25 MB with fast streaming validation in `POST /api/contributor/submit-audio` | `tests/test_nfr.py::test_nfr12_audio_upload_25mb_contract` |
-| 13 | DONE | High performance async endpoints responding in <50ms, static assets optimized | `tests/test_nfr.py::test_nfr13_screen_load_performance` |
-| 14 | DONE | Async FastAPI server supporting concurrent non-blocking requests | `tests/test_nfr.py::test_nfr14_concurrent_capacity` |
-| 15 | DONE | Resilient exception handling and healthcheck probe at `GET /healthz` | `tests/test_nfr.py::test_nfr15_uptime_and_healthz` |
-| 16 | DONE | Data protection, privacy attributes, and copyright tracking across entities | `tests/test_nfr.py::test_nfr16_privacy_and_copyright` |
-| 16.1 | DONE | Strict HTTPS/TLS enforcement configuration, HSTS headers readiness in FastAPI middleware | `tests/test_nfr.py::test_nfr16_1_security_headers` |
+| 12 | PARTIAL | Size validation enforces 25 MB ceiling in `validate_audio_metadata`; full 25 MB streaming load unbenchmarked | `tests/test_nfr.py::test_nfr12_audio_upload_25mb_contract` |
+| 13 | PARTIAL | Single endpoint responds in <50ms locally; 95th percentile under concurrent load unbenchmarked | `tests/test_nfr.py::test_nfr13_screen_load_performance` |
+| 14 | PARTIAL | Non-blocking async endpoints proven in unit suite; high-concurrency production benchmarking pending | `tests/test_nfr.py::test_nfr14_concurrent_capacity` |
+| 15 | PARTIAL | Health probe verified at `/healthz`; long-term 99.5% monthly uptime SLA monitoring pending | `tests/test_nfr.py::test_nfr15_uptime_and_healthz` |
+| 16 | PARTIAL | User privacy attributes and email storage tested; formal GDPR/copyright legal audit pending | `tests/test_nfr.py::test_nfr16_privacy_and_copyright` |
+| 16.1 | PARTIAL | Security response headers (HSTS, nosniff, DENY) verified in tests; production reverse-proxy TLS termination pending | `tests/test_nfr.py::test_nfr16_1_security_headers` |
 | 16.2 | DONE | Anonymous voice recording attribution option and pseudonymized logs | `tests/test_nfr.py::test_nfr16_2_voice_privacy` |
-| 16.3 | DONE | Mandatory passage origin attribution (`Origin.AI` / `Origin.HUMAN`) | `tests/test_nfr.py::test_nfr16_3_origin_attribution` |
-| 17 | DONE | Accessible UI with high contrast, semantic elements, and intuitive learner onboarding | `tests/test_nfr.py::test_nfr17_accessibility_and_usability` |
-| 17.1 | DONE | WCAG 2.1 AA compliant styling, color contrast & ARIA (`mobile/lib/core/theme.dart`, `asghi/static/index.html`) | `mobile/test/widget_test.dart::Login screen renders input fields and submit button`, `tests/test_nfr.py::test_nfr17_1_wcag_aa` |
-| 17.2 | DONE | Zero-setup first-time learner session guidance | `tests/test_nfr.py::test_nfr17_2_first_time_learner` |
-| 18 | DONE | Fusha language validation and inappropriate/vulgar content filter | `tests/test_nfr.py::test_nfr18_fusha_and_content_guidelines` |
-| 18.1 | DONE | Strict Fusha verification rules in reviewer feedback and automated checker | `tests/test_nfr.py::test_nfr18_1_fusha_verification` |
-| 18.2 | DONE | Content moderation filter rejecting inappropriate content | `tests/test_nfr.py::test_nfr18_2_halal_content_filter` |
+| 16.3 | DONE | Mandatory passage origin attribution (`Origin.AI` / `Origin.HUMAN`) enforced by domain and SQL CHECK | `tests/test_nfr.py::test_nfr16_3_origin_attribution`, `tests/test_fix_3_constraints.py` |
+| 17 | PARTIAL | RTL layout and semantic structure verified; assistive technology and screen reader usability study pending | `tests/test_nfr.py::test_nfr17_accessibility_and_usability` |
+| 17.1 | PARTIAL | High contrast ratios and semantic HTML verified; full automated WCAG 2.1 AA audit suite pending | `mobile/test/widget_test.dart::Login screen renders input fields and submit button`, `tests/test_nfr.py::test_nfr17_1_wcag_aa` |
+| 17.2 | PARTIAL | Onboarding flow launches first session; formal first-time learner UX usability testing pending | `tests/test_nfr.py::test_nfr17_2_first_time_learner` |
+| 18 | PARTIAL | Fusha and content heuristics verified on sample strings; full dialect NLP dictionary integration pending | `tests/test_nfr.py::test_nfr18_fusha_and_content_guidelines` |
+| 18.1 | DONE | Strict Fusha verification rules in reviewer feedback and automated checker reject dialectal keywords | `tests/test_nfr.py::test_nfr18_1_fusha_verification` |
+| 18.2 | DONE | Content moderation filter actively blocks vulgar and non-halal keywords | `tests/test_nfr.py::test_nfr18_2_halal_content_filter` |
 | 19 | DONE | Audio recordings validated and tagged for 1–3 minutes (60–180s) primary target format | `tests/test_nfr.py::test_nfr19_audio_duration_rules` |
 | 20 | DONE | Arabic-first interface with full RTL layout (`mobile/lib/main.dart` with `Locale('ar')` & `asghi/static/index.html` with `dir="rtl" lang="ar"`) | `mobile/test/widget_test.dart::TashkeelTextWidget toggles diacritics stripping correctly`, `tests/test_nfr.py::test_nfr20_arabic_rtl_ui` |
-| 21 | DONE | Contributor compensation model with credit calculation on verified submissions | `tests/test_nfr.py::test_nfr21_compensation_model` |
+| 21 | PARTIAL | Contributor compensation ledger and credit calculation tested; automated banking/payout integration pending | `tests/test_nfr.py::test_nfr21_compensation_model` |
 
 ## (b) Implementation -> Requirement Mapping
 

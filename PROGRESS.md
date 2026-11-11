@@ -2,7 +2,7 @@
 
 ## Final Summary
 - **What Runs**:
-  - **Full Backend & REST API**: High-performance asynchronous FastAPI server providing 40 endpoints, fully role-gated per `h_uc.puml` with JWT authentication and strict access control for Learner, Contributor, Reviewer, and Admin.
+  - **Full Backend & REST API**: High-performance asynchronous FastAPI server providing 38 application routes, fully role-gated per `h_uc.puml` with JWT authentication and strict access control for Learner, Contributor, Reviewer, and Admin.
   - **Complete Domain Model**: All 19 classes, 8 enums, and 47 operations from `class-diagram.puml` implemented with identical names, types, and signatures.
   - **All 5 Authoritative Sequences**:
     1. Claim cycle (`h_seq1_claim_cycle`): 72h TTL expiration, mutual exclusion with 409 Conflict, non-extendable claims, tashkeel toggle, audio submission with clock stop.
