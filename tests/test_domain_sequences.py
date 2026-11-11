@@ -300,7 +300,7 @@ def test_ai_engine_generation():
     text = engine.generatePassageText(passage.passageId)
     assert len(text) > 0
     assert passage.origin == Origin.AI
-    assert passage.status == ContentStatus.PENDING_REVIEW
+    assert passage.status == ContentStatus.DRAFT
 
     questions = engine.generateQuestions(passage.passageId, 3)
     assert len(questions) == 3
@@ -310,5 +310,5 @@ def test_ai_engine_generation():
     assert Difficulty.HARD in difficulties
     for q in questions:
         assert q.origin == Origin.AI
-        assert q.status == ContentStatus.PENDING_REVIEW
+        assert q.status == ContentStatus.DRAFT
         assert q.authorId is None  # Invariant: authorId == null <=> origin == AI

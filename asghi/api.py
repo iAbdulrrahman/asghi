@@ -780,6 +780,11 @@ def start_learner_session(req: StartSessionRequest, user: User = Depends(get_cur
     if not target_p:
         raise HTTPException(status_code=404, detail="النص غير موجود")
 
+    # Req 7.3 & Finding 12: refuse session creation if passage has no verified questions
+    initial_q = target_p.getQuestion(Difficulty.EASY) or target_p.getQuestion(Difficulty.MEDIUM) or target_p.getQuestion(Difficulty.HARD)
+    if not initial_q:
+        raise HTTPException(status_code=400, detail="لا توجد أسئلة معتمدة لهذا النص")
+
     repo.save_passage(target_p)
     session = learner_prof.startSession(req.passageId)
     session.learnerId = user.userId
