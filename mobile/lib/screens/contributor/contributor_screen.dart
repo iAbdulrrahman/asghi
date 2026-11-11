@@ -185,74 +185,77 @@ class _ContributorScreenState extends ConsumerState<ContributorScreen> with Sing
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     if (!isRecording) ...[
-                      ElevatedButton.icon(
-                        icon: const Icon(Icons.mic),
-                        label: const Text('بدء التسجيل'),
-                        style: ElevatedButton.styleFrom(backgroundColor: AppConstants.primaryEmerald),
-                        onPressed: () async {
-                          final tempDir = Directory.systemTemp;
-                          final targetPath = '${tempDir.path}/rec_${p.passageId}_${DateTime.now().millisecondsSinceEpoch}.wav';
-                          await recorder.startRecording(targetPath);
-                          setModalState(() {
-                            isRecording = true;
-                            elapsed = 0;
-                            validationError = null;
-                          });
-                          timer = Timer.periodic(const Duration(seconds: 1), (t) {
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          icon: const Icon(Icons.mic),
+                          label: const Text('بدء التسجيل'),
+                          style: ElevatedButton.styleFrom(backgroundColor: AppConstants.primaryEmerald),
+                          onPressed: () async {
+                            final tempDir = Directory.systemTemp;
+                            final targetPath = '${tempDir.path}/rec_${p.passageId}_${DateTime.now().millisecondsSinceEpoch}.wav';
+                            await recorder.startRecording(targetPath);
                             setModalState(() {
-                              elapsed++;
-                            });
-                          });
-                        },
-                      ),
-                      const SizedBox(width: 8),
-                      OutlinedButton.icon(
-                        icon: const Icon(Icons.file_upload),
-                        label: const Text('استيراد ملف'),
-                        onPressed: () async {
-                          final path = await recorder.pickAudioFile();
-                          if (path != null) {
-                            setModalState(() {
-                              localAudioPath = path;
-                              // Assume compliant 60s file from picker unless specified
-                              durationSeconds = 60.0;
-                              elapsed = 60;
+                              isRecording = true;
+                              elapsed = 0;
                               validationError = null;
                             });
-                          }
-                        },
+                            timer = Timer.periodic(const Duration(seconds: 1), (t) {
+                              setModalState(() {
+                                elapsed++;
+                              });
+                            });
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          icon: const Icon(Icons.file_upload),
+                          label: const Text('استيراد ملف'),
+                          onPressed: () async {
+                            final path = await recorder.pickAudioFile();
+                            if (path != null) {
+                              setModalState(() {
+                                localAudioPath = path;
+                                // Assume compliant 60s file from picker unless specified
+                                durationSeconds = 60.0;
+                                elapsed = 60;
+                                validationError = null;
+                              });
+                            }
+                          },
+                        ),
                       ),
                     ] else ...[
-                      ElevatedButton.icon(
-                        icon: const Icon(Icons.stop),
-                        label: const Text('إيقاف'),
-                        style: ElevatedButton.styleFrom(backgroundColor: AppConstants.errorRed),
-                        onPressed: () async {
-                          timer?.cancel();
-                          final path = await recorder.stopRecording();
-                          setModalState(() {
-                            isRecording = false;
-                            localAudioPath = path;
-                            durationSeconds = elapsed.toDouble();
-                          });
-                        },
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          icon: const Icon(Icons.stop),
+                          label: const Text('إيقاف'),
+                          style: ElevatedButton.styleFrom(backgroundColor: AppConstants.errorRed),
+                          onPressed: () async {
+                            timer?.cancel();
+                            final path = await recorder.stopRecording();
+                            setModalState(() {
+                              isRecording = false;
+                              localAudioPath = path;
+                              durationSeconds = elapsed.toDouble();
+                            });
+                          },
+                        ),
                       ),
                     ],
                   ],
                 ),
                 const SizedBox(height: 16),
                 const Text('نوع النسبة (Attribution):', style: TextStyle(fontWeight: FontWeight.bold)),
-                RadioListTile<String>(
-                  title: const Text('إظهار اسمي كقارئ معتمد'),
-                  value: 'SHOW_NAME',
-                  groupValue: attribution,
-                  onChanged: (val) => setModalState(() => attribution = val!),
-                ),
-                RadioListTile<String>(
-                  title: const Text('تسجيل مجهول (Anonymous)'),
-                  value: 'ANONYMOUS',
-                  groupValue: attribution,
-                  onChanged: (val) => setModalState(() => attribution = val!),
+                const SizedBox(height: 8),
+                SegmentedButton<String>(
+                  segments: const [
+                    ButtonSegment(value: 'SHOW_NAME', label: Text('إظهار اسمي كقارئ معتمد')),
+                    ButtonSegment(value: 'ANONYMOUS', label: Text('تسجيل مجهول (Anonymous)')),
+                  ],
+                  selected: {attribution},
+                  onSelectionChanged: (val) => setModalState(() => attribution = val.first),
                 ),
                 const SizedBox(height: 12),
                 ElevatedButton(
