@@ -1,3 +1,4 @@
+import 'package:mobile/core/arabic_display.dart';
 import 'dart:async';
 import 'dart:io';
 import 'package:dio/dio.dart';
@@ -292,12 +293,12 @@ class _ContributorScreenState extends ConsumerState<ContributorScreen> with Sing
                   ],
                 ),
                 const SizedBox(height: 16),
-                const Text('نوع النسبة (Attribution):', style: TextStyle(fontWeight: FontWeight.bold)),
+                const Text('نوع النسبة والإسناد:', style: TextStyle(fontWeight: FontWeight.bold)),
                 const SizedBox(height: 8),
                 SegmentedButton<String>(
                   segments: const [
                     ButtonSegment(value: 'SHOW_NAME', label: Text('إظهار اسمي كقارئ معتمد')),
-                    ButtonSegment(value: 'ANONYMOUS', label: Text('تسجيل مجهول (Anonymous)')),
+                    ButtonSegment(value: 'ANONYMOUS', label: Text('تسجيل مجهول (بدون اسم)')),
                   ],
                   selected: {attribution},
                   onSelectionChanged: (val) => setModalState(() => attribution = val.first),
@@ -515,7 +516,7 @@ class _ContributorScreenState extends ConsumerState<ContributorScreen> with Sing
                                 ],
                               ),
                               const SizedBox(height: 8),
-                              Text('الحالة: $status', style: const TextStyle(color: Colors.grey)),
+                              Text('الحالة: ${ArabicDisplay.status(status)}', style: const TextStyle(color: Colors.grey)),
                               if (isRejected && rejectionReason != null) ...[
                                 const SizedBox(height: 8),
                                 Container(
