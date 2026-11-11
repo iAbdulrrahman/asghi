@@ -70,6 +70,7 @@ async def _claim_sweeper_loop():
         try:
             repo = get_repository()
             repo.sweep_expired_claims()
+            repo.sweep_abandoned_sessions()
         except Exception:
             pass
         await asyncio.sleep(60)
@@ -672,7 +673,7 @@ def get_pending_questions(user: User = Depends(get_current_user)):
     pending = []
     for p in Passage._registry:
         for q in p.questions:
-            if q.status == ContentStatus.PENDING_REVIEW:
+            if q.status == ContentStatus.PENDING_REVIEW or (q.origin == Origin.AI and q.status == ContentStatus.DRAFT):
                 pending.append({
                     "questionId": str(q.questionId),
                     "passageId": str(p.passageId),
@@ -784,6 +785,16 @@ def start_learner_session(req: StartSessionRequest, user: User = Depends(get_cur
     initial_q = target_p.getQuestion(Difficulty.EASY) or target_p.getQuestion(Difficulty.MEDIUM) or target_p.getQuestion(Difficulty.HARD)
     if not initial_q:
         raise HTTPException(status_code=400, detail="لا توجد أسئلة معتمدة لهذا النص")
+
+    # Close previous active session on this passage for this learner if abandoned
+    stale_sids = [
+        sid for sid, s in active_sessions.items()
+        if getattr(s, "learnerId", None) == user.userId and s.passageId == req.passageId
+    ]
+    for sid in stale_sids:
+        old_s = active_sessions.pop(sid)
+        old_s.finishSession()
+        repo.save_test_session(old_s)
 
     repo.save_passage(target_p)
     session = learner_prof.startSession(req.passageId)
