@@ -57,6 +57,14 @@ All 65 automated tests verify all 41 Functional Requirements, 5 Authoritative Se
 
 ---
 
+## 📱 Mobile Client (Flutter)
+- **Platforms**: Android + iOS (mobile/)
+- **Package / Org**: org.asghi.mobile
+- **Architecture**: Flutter 3.47 / Dart 3.13, Material 3, Riverpod state management, Dio HTTP networking, Secure Storage, Just Audio.
+- **RTL & Localization**: Arabic native (Locale('ar')), right-to-left layout direction.
+- **iOS Target Build Status**: BLOCKED-BY-PLATFORM: macOS required to build iOS target (iOS project scaffold generated and committed in mobile/ios/).
+- **Android Target**: Built with Gradle via lutter build apk --debug.
+
 ## 👥 Seed Accounts for Testing
 
 | Role | Email / Identifier | Password | Arabic Level | Notes |

@@ -34,6 +34,12 @@
 
 ---
 
+### Flutter Mobile Application (Items 20-26)
+- **Status**: Scaffolded and Configured (mobile/)
+- **Android Target**: Active (org.asghi.mobile)
+- **iOS Target**: Scaffolded (mobile/ios/); BLOCKED-BY-PLATFORM: macOS required to build iOS target
+- **Platforms Supported**: Android (ndroid/), iOS (ios/)
+
 ### Flutter Mobile Client Bootstrap (Item 19)
 - **Status**: Verified and Operational
 - **Flutter SDK**: 3.47.0 • channel stable
