@@ -561,6 +561,12 @@ def create_review_assignment(req: ReviewAssignmentRequest, user: User = Depends(
 
     try:
         assignment = reviewer_prof.assignReview(req.contentId)
+        repo = get_repository()
+        for p in Passage._registry:
+            if p.contentId == req.contentId or any(r.contentId == req.contentId for r in p.audioRecordings):
+                repo.save_passage(p)
+                break
+        repo.save_review_assignment(assignment)
         return {
             "assignmentId": str(assignment.reviewId),
             "contentId": str(assignment.contentId),
@@ -589,19 +595,19 @@ def submit_review_decision(req: ReviewDecisionRequest, user: User = Depends(get_
     if not assignment:
         raise HTTPException(status_code=404, detail="مهمة المراجعة غير موجودة")
 
-    feedback = reviewer_prof.createFeedback(
-        isFusha=req.isFusha,
-        dialectFree=req.dialectFree,
-        audioQuality=req.audioQuality,
-        feedback=req.reason,
+    repo = get_repository()
+    # P1 Item 6: assignment + feedback + approval count + content status + claim release + reputation in ONE atomic transaction
+    success = repo.submit_verdict_tx(
+        assignment_id=assignment.reviewId,
+        reviewer_id=reviewer_prof.userRoleProfileId,
+        is_fusha=req.isFusha,
+        dialect_free=req.dialectFree,
+        audio_quality=req.audioQuality,
+        is_approved=req.isApproved,
+        reason=req.reason,
     )
-    reviewer_prof.submitDecision(assignment, feedback, req.isApproved, req.reason)
-
-    # Persist updated content and assignments
-    for p in Passage._registry:
-        if p.contentId == assignment.contentId or any(r.contentId == assignment.contentId for r in p.audioRecordings):
-            repo.save_passage(p)
-            break
+    if not success:
+        raise HTTPException(status_code=400, detail="تعذر تسجيل قرار المراجعة")
 
     return {"message": "تم تسجيل قرار المراجعة بنجاح"}
 
