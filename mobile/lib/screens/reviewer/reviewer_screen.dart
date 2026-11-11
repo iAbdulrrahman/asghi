@@ -1,3 +1,4 @@
+import 'package:mobile/core/arabic_display.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/api_client.dart';
@@ -307,11 +308,11 @@ class _ReviewerScreenState extends ConsumerState<ReviewerScreen> with SingleTick
                                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                     children: [
                                       Chip(
-                                        label: Text('الصعوبة: $difficulty'),
+                                        label: Text('الصعوبة: ${ArabicDisplay.difficulty(difficulty)}'),
                                         backgroundColor: AppConstants.accentGold.withValues(alpha: 0.2),
                                       ),
                                       Chip(
-                                        label: Text('المصدر: $origin'),
+                                        label: Text('المصدر: ${ArabicDisplay.origin(origin)}'),
                                         backgroundColor: AppConstants.primaryLight.withValues(alpha: 0.2),
                                       ),
                                     ],

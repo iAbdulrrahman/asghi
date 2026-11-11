@@ -1,3 +1,4 @@
+import 'package:mobile/core/arabic_display.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/api_client.dart';
@@ -221,7 +222,7 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Chip(
-                            label: Text('المستوى: ${_currentQuestion!.difficulty}'),
+                            label: Text('الصعوبة: ${ArabicDisplay.difficulty(_currentQuestion!.difficulty)}'),
                             backgroundColor: Colors.teal.shade50,
                           ),
                           Text('النقاط: $_score', style: const TextStyle(fontWeight: FontWeight.bold)),

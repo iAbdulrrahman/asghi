@@ -1,3 +1,4 @@
+import 'package:mobile/core/arabic_display.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/api_client.dart';
@@ -451,11 +452,11 @@ class _AdminScreenState extends ConsumerState<AdminScreen> with SingleTickerProv
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'بلاغ عن $contentType: $reason',
+                    'بلاغ عن ${ArabicDisplay.contentType(contentType)}: $reason',
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                 ),
-                Chip(label: Text(status)),
+                Chip(label: Text(ArabicDisplay.status(status))),
               ],
             ),
             const SizedBox(height: 12),
