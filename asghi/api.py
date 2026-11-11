@@ -108,8 +108,13 @@ class RegisterRequest(BaseModel):
 
 
 class LoginRequest(BaseModel):
-    emailOrPhone: str
+    emailOrPhone: Optional[str] = None
+    identifier: Optional[str] = None
     password: str
+
+    @property
+    def login_id(self) -> str:
+        return self.identifier or self.emailOrPhone or ""
 
 
 class CompleteProfileRequest(BaseModel):
@@ -227,9 +232,10 @@ def register(req: RegisterRequest, repo: Repository = Depends(get_repository)):
 @app.post("/api/auth/login")
 def login(req: LoginRequest, repo: Repository = Depends(get_repository)):
     """Req 1.2 & Seq 4: Login with email or phone number."""
-    target_user = repo.get_user_by_identifier(req.emailOrPhone)
+    login_ident = req.login_id
+    target_user = repo.get_user_by_identifier(login_ident)
 
-    if not target_user or not target_user.login(req.emailOrPhone, req.password):
+    if not target_user or not target_user.login(login_ident, req.password):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="بيانات الدخول غير صحيحة")
 
     token = create_access_token(target_user.userId, [p.role for p in target_user.userProfiles])
@@ -239,6 +245,9 @@ def login(req: LoginRequest, repo: Repository = Depends(get_repository)):
         "displayName": target_user.displayName,
         "roles": [p.role.value for p in target_user.userProfiles],
         "token": token,
+        "accessToken": token,
+        "access_token": token,
+        "token_type": "bearer",
     }
 
 
