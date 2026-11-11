@@ -1,3 +1,11 @@
+# Auto-discover Python and Flutter (supports Windows and Unix, even if Flutter is not on PATH)
+PYTHON ?= python
+ifeq ($(OS),Windows_NT)
+  FLUTTER ?= $(shell where flutter 2>nul || echo C:/flutter/bin/flutter.bat)
+else
+  FLUTTER ?= $(shell command -v flutter 2>/dev/null || echo /c/flutter/bin/flutter.bat)
+endif
+
 .PHONY: check test seed test-backend test-mobile help
 
 help:
@@ -8,18 +16,18 @@ help:
 	@echo "  make test-mobile  - Run flutter analyze and flutter test"
 
 seed:
-	python seed.py
+	$(PYTHON) seed.py
 
 test-backend:
-	python -m pytest
-	python tests/test_fix_4_seed_restart.py
+	$(PYTHON) -m pytest
+	$(PYTHON) tests/test_fix_4_seed_restart.py
 
 test-mobile:
-	cd mobile && flutter analyze && flutter test
+	cd mobile && $(FLUTTER) analyze && $(FLUTTER) test
 
 check:
-	pip install -r requirements.txt
-	python seed.py
-	python -m pytest
-	python tests/test_fix_4_seed_restart.py
-	cd mobile && flutter analyze && flutter test
+	$(PYTHON) -m pip install -r requirements.txt
+	$(PYTHON) seed.py
+	$(PYTHON) -m pytest
+	$(PYTHON) tests/test_fix_4_seed_restart.py
+	cd mobile && $(FLUTTER) analyze && $(FLUTTER) test
