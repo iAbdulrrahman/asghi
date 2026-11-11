@@ -3,7 +3,9 @@ Invention #1: Concrete persistence layer mapping domain entities to SQLite.
 """
 from __future__ import annotations
 import json
+import os
 import sqlite3
+from contextlib import contextmanager
 from datetime import datetime, timezone, timedelta
 from typing import Optional, List, Any
 from uuid import UUID
@@ -33,22 +35,53 @@ from asghi.domain.review_feedback import ReviewFeedback
 from asghi.domain.content_flag import ContentFlag
 from asghi.domain.test_session import TestSession
 from asghi.domain.question_response import QuestionResponse
+from asghi.domain.reviewable_content import ReviewableContent
 
 DEFAULT_DB_PATH = "asghi.db"
 
 
+def get_db_path() -> str:
+    return os.environ.get("ASGHI_DB_PATH", DEFAULT_DB_PATH)
+
+
+def get_repository() -> Repository:
+    return Repository(db_path=get_db_path())
+
+
 class Repository:
-    def __init__(self, db_path: str = DEFAULT_DB_PATH):
-        self.db_path = db_path
+    def __init__(self, db_path: Optional[str] = None):
+        self.db_path = db_path or get_db_path()
         self._init_db()
 
-    def _get_conn(self) -> sqlite3.Connection:
+    def clear_all_tables(self) -> None:
+        """Clear all tables in database for isolated test fixtures."""
+        with self._get_conn() as conn:
+            conn.execute("PRAGMA foreign_keys = OFF;")
+            conn.execute("DELETE FROM content_flags;")
+            conn.execute("DELETE FROM review_assignments;")
+            conn.execute("DELETE FROM questions;")
+            conn.execute("DELETE FROM audio_recordings;")
+            conn.execute("DELETE FROM passages;")
+            conn.execute("DELETE FROM user_profiles;")
+            conn.execute("DELETE FROM users;")
+            conn.execute("DELETE FROM test_sessions;")
+            conn.execute("PRAGMA foreign_keys = ON;")
+
+
+
+
+    @contextmanager
+    def _get_conn(self):
         conn = sqlite3.connect(self.db_path)
         conn.row_factory = sqlite3.Row
         # Enable foreign keys and WAL mode (NFR 14)
         conn.execute("PRAGMA journal_mode=WAL;")
         conn.execute("PRAGMA foreign_keys=ON;")
-        return conn
+        try:
+            with conn:
+                yield conn
+        finally:
+            conn.close()
 
     def _init_db(self) -> None:
         with self._get_conn() as conn:
@@ -491,3 +524,72 @@ class Repository:
                         status=FlagStatus(fr["status"]),
                     )
                     p.flags.append(flag)
+
+    def _hydrate_user(self, conn: sqlite3.Connection, ur: sqlite3.Row) -> User:
+        for u in User._registry:
+            if str(u.userId) == ur["user_id"]:
+                return u
+        u = User(
+            email=ur["email"],
+            phoneNo=ur["phone_no"],
+            displayName=ur["display_name"],
+            passwordHash=ur["password_hash"],
+            arabicLevel=Level(ur["arabic_level"]) if ur["arabic_level"] else Level.A1,
+            userId=UUID(ur["user_id"]),
+        )
+        u.status = ur["status"] or "ACTIVE"
+        prof_rows = conn.execute(
+            "SELECT * FROM user_profiles WHERE user_id = ?;", (ur["user_id"],)
+        ).fetchall()
+        for pr in prof_rows:
+            role = UserRole(pr["role"])
+            prof = u.addRole(role)
+            prof.userRoleProfileId = UUID(pr["profile_id"])
+            if hasattr(prof, "isSpecialist"):
+                prof.isSpecialist = bool(pr["is_specialist"])
+            if hasattr(prof, "creditsEarned"):
+                prof.creditsEarned = pr["credits_earned"]
+            if hasattr(prof, "reputation") and prof.reputation:
+                prof.reputation.score = pr["score"]
+                prof.reputation.approvalRate = pr["approval_rate"]
+                prof.reputation.totalSubmissions = pr["total_submissions"]
+            if hasattr(prof, "progress") and prof.progress:
+                prof.progress.totalScore = pr["learner_total_score"]
+                prof.progress.totalTimeSpent = pr["learner_total_time"]
+                prof.progress.currentStreakDays = pr["learner_streak"]
+        return u
+
+    def get_user_by_id(self, user_id: UUID) -> Optional[User]:
+        for u in User._registry:
+            if u.userId == user_id:
+                return u
+        with self._get_conn() as conn:
+            ur = conn.execute("SELECT * FROM users WHERE user_id = ?;", (str(user_id),)).fetchone()
+            if not ur:
+                return None
+            return self._hydrate_user(conn, ur)
+
+    def get_user_by_identifier(self, identifier: str) -> Optional[User]:
+        ident = identifier.strip()
+        for u in User._registry:
+            if (u.email and u.email.lower() == ident.lower()) or (u.phoneNo and u.phoneNo == ident):
+                return u
+        with self._get_conn() as conn:
+            ur = conn.execute(
+                "SELECT * FROM users WHERE LOWER(email) = LOWER(?) OR phone_no = ?;",
+                (ident, ident),
+            ).fetchone()
+            if not ur:
+                return None
+            return self._hydrate_user(conn, ur)
+
+    def get_passage_by_id(self, passage_id: UUID) -> Optional[Passage]:
+        for p in Passage._registry:
+            if p.passageId == passage_id:
+                return p
+        self.load_all_from_db()
+        for p in Passage._registry:
+            if p.passageId == passage_id:
+                return p
+        return None
+

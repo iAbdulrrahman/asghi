@@ -4,6 +4,7 @@ Implements all functional requirements and enforces role-gating per h_uc.puml.
 from __future__ import annotations
 import os
 import shutil
+from contextlib import asynccontextmanager
 from datetime import timedelta
 from typing import Optional, List, Dict, Any
 from uuid import UUID, uuid4
@@ -46,7 +47,7 @@ from asghi.domain.review_feedback import ReviewFeedback
 from asghi.domain.content_flag import ContentFlag
 from asghi.domain.test_session import TestSession
 from asghi.domain.ai_engine import AIEngine
-from asghi.repository import Repository
+from asghi.repository import Repository, get_repository
 from asghi.security import (
     create_access_token,
     get_current_user,
@@ -61,13 +62,24 @@ from asghi.moderation import (
 UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "..", "uploads", "audio")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-repo = Repository()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """FastAPI lifespan: initialize and hydrate database once on application startup."""
+    repo = get_repository()
+    repo.load_all_from_db()
+    yield
+
+
+repo = get_repository()
 
 app = FastAPI(
     title="اصغِ - منصة التدريب على الاستماع العربي الفصيح",
     description="Crowdsourced Arabic Listening Practice Platform",
     version="1.0.0",
+    lifespan=lifespan,
 )
+
 
 # NFR 16.1: Security headers & CORS
 app.add_middleware(
@@ -195,12 +207,11 @@ def healthz():
 
 # --- Auth & Profile (Req 1.1, 1.2, 1.3) ---
 @app.post("/api/auth/register", status_code=status.HTTP_201_CREATED)
-def register(req: RegisterRequest):
+def register(req: RegisterRequest, repo: Repository = Depends(get_repository)):
     """Req 1.2 & Seq 4: Register new user with email or phone number."""
-    # Check if user already exists
-    for u in User._registry:
-        if (u.email and u.email.lower() == req.emailOrPhone.lower()) or (u.phoneNo and u.phoneNo == req.emailOrPhone):
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="الحساب مسجل بالفعل")
+    existing = repo.get_user_by_identifier(req.emailOrPhone)
+    if existing:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="الحساب مسجل بالفعل")
 
     user = User()
     user.register(req.emailOrPhone, req.password)
@@ -214,13 +225,9 @@ def register(req: RegisterRequest):
 
 
 @app.post("/api/auth/login")
-def login(req: LoginRequest):
+def login(req: LoginRequest, repo: Repository = Depends(get_repository)):
     """Req 1.2 & Seq 4: Login with email or phone number."""
-    target_user: Optional[User] = None
-    for u in User._registry:
-        if (u.email and u.email.lower() == req.emailOrPhone.lower()) or (u.phoneNo and u.phoneNo == req.emailOrPhone):
-            target_user = u
-            break
+    target_user = repo.get_user_by_identifier(req.emailOrPhone)
 
     if not target_user or not target_user.login(req.emailOrPhone, req.password):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="بيانات الدخول غير صحيحة")
@@ -236,7 +243,7 @@ def login(req: LoginRequest):
 
 
 @app.post("/api/users/profile")
-def complete_profile(req: CompleteProfileRequest, user: User = Depends(get_current_user)):
+def complete_profile(req: CompleteProfileRequest, user: User = Depends(get_current_user), repo: Repository = Depends(get_repository)):
     """Req 1.3 & Seq 4: Complete profile with displayName, level, and role interest."""
     user.completeProfile(req.displayName, req.level, req.roleInterest)
     repo.save_user(user)
@@ -249,6 +256,7 @@ def complete_profile(req: CompleteProfileRequest, user: User = Depends(get_curre
         "roles": [p.role.value for p in user.userProfiles],
         "token": token,
     }
+
 
 
 @app.get("/api/users/me")
