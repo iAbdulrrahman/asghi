@@ -4,11 +4,11 @@ PYTHON ?= python
 ifeq ($(OS),Windows_NT)
   VENV_DIR := .venv
   VENV_PY := $(VENV_DIR)/Scripts/python.exe
-  FLUTTER ?= $(shell where flutter 2>nul || echo C:/flutter/bin/flutter.bat)
+  FLUTTER ?= $(firstword $(wildcard C:/flutter/bin/flutter.bat) flutter)
 else
   VENV_DIR := .venv
   VENV_PY := $(VENV_DIR)/bin/python
-  FLUTTER ?= $(shell command -v flutter 2>/dev/null || echo /c/flutter/bin/flutter.bat)
+  FLUTTER ?= $(firstword $(shell command -v flutter 2>/dev/null) /c/flutter/bin/flutter.bat)
 endif
 
 .PHONY: setup check test seed test-backend test-mobile test-live device-check public-check help
