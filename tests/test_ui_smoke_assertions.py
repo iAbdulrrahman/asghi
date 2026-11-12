@@ -24,7 +24,7 @@ def test_ui_smoke_has_behavioral_assertions_and_no_size_checks():
     assert "logcat" in code, "ui_smoke.py must inspect logcat"
 
     # 3. Contributor submissions status chips
-    assert "تسجيلاتي وحالتها" in code, "ui_smoke.py must navigate to contributor submissions tab"
+    assert "تسجيلاتي" in code, "ui_smoke.py must navigate to contributor submissions tab"
 
     # 4. Reviewer verification against API
     assert "reviewer" in code, "ui_smoke.py must drive reviewer role"

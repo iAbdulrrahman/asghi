@@ -13,17 +13,18 @@
   - **Persistence & Seeding**: SQLite repository with WAL mode (`asghi.db`), full foreign key cascades, unique claim constraints, and single documented root seed entry point (`python seed.py`, delegating to `asghi.seed`) seeding test accounts for all four roles, sample passages, audio recordings, and tiered questions.
   - **Native Flutter Mobile App (Android + iOS targets)**: Pure Flutter mobile client located in `mobile/` with Riverpod state management, Dio HTTP client, Arabic RTL layout, bundled `Noto Naskh Arabic` typography, clean UI copy with zero raw specification citations, localized Arabic enum display layer (`arabic_display.dart`), WCAG 2.1 AA theme, responsive audio player widget with 0.75x/1.0x/1.25x/1.5x playback speeds, real-time diacritics stripping (`TashkeelTextWidget`), and complete screens for all four roles.
   - **Android APK Built & Verified**: Successfully compiled both debug and release APKs (`mobile/build/app/outputs/flutter-apk/app-release.apk`, 54.8 MB).
-  - **Live Android Device Execution**: Automated multi-role smoke walkthrough (`scripts/ui_smoke.py`, wired to `make device-check`) executed on live Android 13 emulator (`emulator-5554`, API 33) driven via adb against seeded backend, capturing authentic screenshots for all 4 roles:
+  - **Live Android Device Execution**: Automated multi-role smoke walkthrough (`scripts/ui_smoke.py`, wired to `make device-check` and `make public-check`) executed on live Android 13 emulator (`emulator-5554`, API 33) driven via adb against seeded backend and public HTTPS tunnel (`https://invoicing.0xabdul.dev`), capturing authentic screenshots for all 4 roles and live HTTPS audio playback:
     - Learner: `mobile/docs/live_learner.png` (110 KB)
     - Contributor: `mobile/docs/live_contributor.png` (224 KB)
     - Reviewer: `mobile/docs/live_reviewer.png` (179 KB)
     - Admin: `mobile/docs/live_admin.png` (158 KB)
+    - Audio over HTTPS: `mobile/docs/live_audio_https.png` (101 KB)
   - **Comprehensive Test Suite**:
-    - **105 Python backend tests + 1 live multi-role integration suite** passing with 100% pass rate (`make test-backend`, `make test-live`).
-    - **37 Flutter mobile tests across 12 test files** passing with 100% pass rate (`cd mobile && flutter test`).
+    - **124 Python backend tests + 1 live multi-role integration suite** passing with 100% pass rate (`make test-backend`, `make test-live`).
+    - **45 Flutter mobile tests across 14 test files** passing with 100% pass rate (`cd mobile && flutter test`).
     - Clean static analysis: `cd mobile && flutter analyze` reports **No issues found**.
     - Fully hermetic verification: `make check` executes through dedicated `.venv` and succeeds even with global pytest stripped from PATH.
-    - Scripted device verification: `make device-check` executes all 4 role walkthroughs on connected device/emulator.
+    - Scripted device verification: `make device-check` and `make public-check` execute all 4 role walkthroughs and 20 behavioral assertions on connected device/emulator.
 
 - **What's Partial**:
   - **NFR 12 (Audio Payload Limit)**: Size validation strictly enforces 25 MB ceiling in `validate_audio_metadata`; full 25 MB sustained streaming under concurrent load unbenchmarked.
@@ -31,7 +32,7 @@
   - **NFR 14 (Concurrent Capacity)**: Non-blocking asynchronous FastAPI endpoints proven in unit suite; high-concurrency production load benchmarking pending.
   - **NFR 15 (Uptime SLA & Health Monitoring)**: Health probe verified at `/healthz`; long-term 99.5% monthly uptime SLA monitoring pending production telemetry.
   - **NFR 16 (Privacy & Copyright)**: User privacy attributes and email storage tested; formal GDPR/copyright legal audit pending.
-  - **NFR 16.1 (Security Headers)**: Security response headers (HSTS, nosniff, DENY) verified in tests; production reverse-proxy TLS termination pending.
+
   - **NFR 17 (Accessibility & Usability)**: RTL layout and semantic structure verified; assistive technology and screen reader usability study pending.
   - **NFR 17.1 (WCAG 2.1 AA Compliance)**: High contrast ratios and semantic HTML verified; full automated WCAG 2.1 AA audit suite pending.
   - **NFR 17.2 (First-time Learner UX)**: Onboarding flow launches first session; formal first-time learner UX usability testing pending.
@@ -44,9 +45,9 @@
   - Requirement 6.8: Offline local database sync is marked `OUT-OF-SCOPE` per specification definition of done (manifest endpoint implemented at `GET /api/passages/{id}/offline-package` with offline package download).
 
 - **Mobile Testing Levels Verified**:
-  1. **Live Android Device Run & Smoke Script**: Automated runner `scripts/ui_smoke.py` (`make device-check`) drives all 4 roles via adb on Android emulator `emulator-5554` (API 33), verifying authentication, catalogue, submissions, queues, and dashboard with 4 live screencaps (`live_{learner,contributor,reviewer,admin}.png`).
+  1. **Live Android Device Run & Smoke Script**: Automated runner `scripts/ui_smoke.py` (`make device-check` and `make public-check`) drives all 4 roles via adb on Android emulator `emulator-5554` (API 33), verifying authentication, catalogue, audio playback over HTTPS, submissions, queues, and dashboard with 20/20 behavioral assertions passing and 5 live screencaps (`live_{learner,contributor,reviewer,admin}.png`, `live_audio_https.png`).
   2. **Golden Visual Regression**: 5/5 golden flow renders (`mobile/docs/flow_1.png` to `flow_5.png`) regenerated with bundled `Noto Naskh Arabic` font and Arabic enum display mappings.
-  3. **Role-Gated Widget Testing**: 37 unit and widget tests covering Contributor, Reviewer, Learner, Admin, Auth, Error Handling, Font/Theme rendering, Clean UI copy, and Arabic enum display.
+  3. **Role-Gated Widget Testing**: 45 unit and widget tests covering Contributor, Reviewer, Learner, Admin, Auth, Error Handling, Font/Theme rendering, Clean UI copy, Arabic enum display, runtime server URL override, playback error UI, and tab contrast.
   4. **Live Server Integration**: `scripts/e2e.py` exercises all five domain flows against a running backend process.
 
 - **The Five Most Important Things the Owners Must Decide or Fix in Their Diagrams**:

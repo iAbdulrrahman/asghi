@@ -82,14 +82,28 @@ Every fix and feature was developed on an isolated branch off `master`, tested w
 | 18 | `fix/18-ui-smoke-script` | `fix-18` | Implemented `scripts/ui_smoke.py` and `make device-check` target driving 4 roles via adb | `tests/test_fix_18_ui_smoke_and_target.py`, `scripts/ui_smoke.py` |
 | 19 | `fix/19-docs-and-traceability` | `fix-19` | Updated `TRACEABILITY.md`, `INVENTIONS.md`, `PROGRESS.md`, and `HISTORY.md` with complete audit trail | Full test suite verification |
 
+### Pass 6: Runtime Server Address Configuration, Network Security, Auth Gating, Behavior-Driven UI Smoke, and Live HTTPS Verification
+| Item | Branch | Tag | Description | Failing Test Catching It |
+|---|---|---|---|---|
+| 1 | `fix/1-runtime-server-url` | `fix-1` | Runtime-configurable server address via Flutter Secure Storage, settings modal on login screen, URL normalization and audio URL resolution | `mobile/test/runtime_server_url_test.dart` |
+| 2 | `fix/2-playback-error-ui` | `fix-2` | Inline Arabic error message with retry button (`retryLoadAudioButton`), disabled play button and seek slider on error in `AudioPlayerWidget` | `mobile/test/playback_error_ui_test.dart` |
+| 3 | `fix/3-network-security-config` | `fix-3` | Android `network_security_config.xml` permitting cleartext only for local addresses (`10.0.2.2`, `127.0.0.1`, `localhost`), enforcing strict HTTPS everywhere else | `tests/test_network_security_config.py` |
+| 4 | `fix/4-tab-label-contrast` | `fix-4` | High-contrast TabBar theme (`labelColor: white`, `unselectedLabelColor: white70`, `indicatorColor: gold`), wrapped TabBars in `PreferredSize` to prevent collapsing | `mobile/test/tab_contrast_and_labels_test.dart` |
+| 5 | `fix/5-smoke-behavior-assertions` | `fix-5` | Smoke runner behavioral assertions (`AssertionTracker`), zero file-size checks, audio position advance verification, logcat error inspection, non-zero exit on failure | `tests/test_ui_smoke_assertions.py` |
+| 6 | `fix/6-make-public-check` | `fix-6` | `make public-check` target requiring `ASGHI_PUBLIC_URL`, documented `--workers 1` and `-no-audio` emulator flags | `tests/test_public_check_target.py` |
+| 7 | `fix/7-seed-password-overrides` | `fix-7` | Configurable seed passwords via `ASGHI_SEED_PASSWORD` and per-role dict overrides with security warnings when default passwords are used outside development | `tests/test_seed_passwords.py` |
+| 8 | `fix/8-audio-auth-gating` | `fix-8` | Gated `/api/audio/{filename}` with Bearer token or `?token=` query param; client passes JWT auth token when fetching/streaming audio | `tests/test_audio_auth_gating.py` |
+
 ---
 
-## 2. Current Verification Metrics (Pass 5)
+## 2. Current Verification Metrics (Pass 6)
 
-- **Total Python Backend Tests**: 105 passed in ~16.5 seconds (`.venv/Scripts/python.exe -m pytest`)
+- **Total Python Backend Tests**: 124 passed in ~18.3 seconds (`.venv/Scripts/python.exe -m pytest`)
 - **Total Python Restart Persistence Tests**: 1 passed in ~1.9 seconds (`.venv/Scripts/python.exe -m pytest tests/test_fix_4_seed_restart.py`)
 - **Total Python Live Server E2E Tests**: 1 full multi-role integration suite passed in ~3.5 seconds (`.venv/Scripts/python.exe scripts/e2e.py`)
-- **Total Flutter Mobile Tests**: 37 tests passed across 12 test files in ~6.5 seconds (`cd mobile && flutter test`)
+- **Total Flutter Mobile Tests**: 45 tests passed across 14 test files in ~7.2 seconds (`cd mobile && flutter test`)
 - **Static Analysis**: 0 issues found (`cd mobile && flutter analyze`)
-- **Live Device Smoke Walkthrough**: All 4 user roles verified on Android emulator `emulator-5554` via `make device-check`, saving authentic screencaps (`mobile/docs/live_learner.png`, `mobile/docs/live_contributor.png`, `mobile/docs/live_reviewer.png`, `mobile/docs/live_admin.png`, each >100KB)
+- **Live Device Smoke Walkthrough Over HTTPS**: All 4 user roles + real audio playback verified on Android emulator `emulator-5554` against `https://invoicing.0xabdul.dev` via `make public-check`, with 20/20 behavioral assertions passing (0 failures), verifying:
+  - Real audio streamed over HTTPS via Cloudflare tunnel, position advanced on Android device, verified via UI tree and logcat inspection.
+  - Authentic live device screencaps captured: `mobile/docs/live_learner.png`, `mobile/docs/live_contributor.png`, `mobile/docs/live_reviewer.png`, `mobile/docs/live_admin.png`, `mobile/docs/live_audio_https.png`.
 - **Hermetic make check**: 100% green across setup, seed, e2e, pytest, restart verification, flutter analyze, and flutter test

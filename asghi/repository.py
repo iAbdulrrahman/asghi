@@ -402,18 +402,11 @@ class Repository:
     def _save_review_assignment_conn(self, conn: sqlite3.Connection, r: ReviewAssignment) -> None:
         fb = r.feedback
         conn.execute("""
-        INSERT INTO review_assignments (
+        INSERT OR REPLACE INTO review_assignments (
             review_id, content_id, reviewer_id, created_at, is_specialist,
             is_approved, reason, is_fusha, dialect_free, audio_quality, feedback_text
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ON CONFLICT(review_id) DO UPDATE SET
-            is_approved=excluded.is_approved,
-            reason=excluded.reason,
-            is_fusha=excluded.is_fusha,
-            dialect_free=excluded.dialect_free,
-            audio_quality=excluded.audio_quality,
-            feedback_text=excluded.feedback_text;
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
         """, (
             str(r.reviewId),
             str(r.contentId),

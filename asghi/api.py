@@ -617,6 +617,14 @@ def create_review_assignment(req: ReviewAssignmentRequest, user: User = Depends(
         raise HTTPException(status_code=403, detail="المستخدم ليس مراجعاً")
 
     try:
+        existing = next((a for a in reviewer_prof.assignments if str(a.contentId) == str(req.contentId)), None)
+        if existing:
+            return {
+                "assignmentId": str(existing.reviewId),
+                "contentId": str(existing.contentId),
+                "isSpecialistReview": existing.isSpecialistReview,
+            }
+
         assignment = reviewer_prof.assignReview(req.contentId)
         repo = get_repository()
         for p in Passage._registry:

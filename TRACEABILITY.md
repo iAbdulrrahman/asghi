@@ -45,13 +45,13 @@
 | 10 | DONE | `asghi/domain/admin_profile.py::AdminProfile`, `/api/admin/*`, `mobile/lib/screens/admin/admin_screen.dart` | `tests/test_admin_api.py::test_admin_governance_and_moderation`, `tests/test_live_e2e_integration.py` |
 | 10.1 | DONE | `asghi/domain/reputation.py::Reputation`, `GET /api/users/{id}/reputation` | `tests/test_admin_api.py::test_contributor_and_reviewer_reputation` |
 | 10.2 | DONE | `asghi/domain/admin_profile.py::AdminProfile`, `GET /api/admin/dashboard`, `GET /api/admin/report`, `mobile/lib/screens/admin/admin_screen.dart` | `tests/test_fix_9_admin_dashboard_metrics.py`, `tests/test_admin_api.py::test_admin_dashboard_and_reporting`, `tests/test_live_e2e_integration.py`, `mobile/test/admin_screen_test.dart` |
-| 11 | DONE | Native Flutter Mobile Client (`mobile/lib/main.dart`, `mobile/lib/screens/*`, `mobile/docs/FLOWS.md`, `mobile/docs/live_learner.png`, `mobile/docs/live_contributor.png`, `mobile/docs/live_reviewer.png`, `mobile/docs/live_admin.png`, `mobile/docs/flow_{1..5}.png`) & responsive viewport in `asghi/static/index.html` | `scripts/ui_smoke.py` (live run on Android emulator `emulator-5554` via `make device-check`), `tests/test_fix_18_ui_smoke_and_target.py`, `mobile/test/widget_test.dart`, `mobile/test/golden_flows_test.dart`, `tests/test_live_e2e_integration.py`, `tests/test_nfr.py::test_nfr11_mobile_responsive_contract` |
+| 11 | DONE | Native Flutter Mobile Client (`mobile/lib/main.dart`, `mobile/lib/screens/*`, `mobile/docs/FLOWS.md`, `mobile/docs/live_learner.png`, `mobile/docs/live_contributor.png`, `mobile/docs/live_reviewer.png`, `mobile/docs/live_admin.png`, `mobile/docs/live_audio_https.png`, `mobile/docs/flow_{1..5}.png`) & responsive viewport in `asghi/static/index.html` | `scripts/ui_smoke.py` (live run on Android emulator `emulator-5554` via `make device-check` and `make public-check` over HTTPS), `tests/test_fix_18_ui_smoke_and_target.py`, `tests/test_ui_smoke_assertions.py`, `mobile/test/widget_test.dart`, `mobile/test/golden_flows_test.dart`, `tests/test_live_e2e_integration.py`, `tests/test_nfr.py::test_nfr11_mobile_responsive_contract` |
 | 12 | PARTIAL | Size validation enforces 25 MB ceiling in `validate_audio_metadata`; full 25 MB streaming load unbenchmarked | `tests/test_nfr.py::test_nfr12_audio_upload_25mb_contract` |
 | 13 | PARTIAL | Single endpoint responds in <50ms locally; 95th percentile under concurrent load unbenchmarked | `tests/test_nfr.py::test_nfr13_screen_load_performance` |
 | 14 | PARTIAL | Non-blocking async endpoints proven in unit suite; high-concurrency production benchmarking pending | `tests/test_nfr.py::test_nfr14_concurrent_capacity` |
 | 15 | PARTIAL | Health probe verified at `/healthz`; long-term 99.5% monthly uptime SLA monitoring pending | `tests/test_nfr.py::test_nfr15_uptime_and_healthz` |
 | 16 | PARTIAL | User privacy attributes and email storage tested; formal GDPR/copyright legal audit pending | `tests/test_nfr.py::test_nfr16_privacy_and_copyright` |
-| 16.1 | PARTIAL | Security response headers (HSTS, nosniff, DENY) verified in tests; production reverse-proxy TLS termination pending | `tests/test_nfr.py::test_nfr16_1_security_headers` |
+| 16.1 | DONE | Security response headers (HSTS, nosniff, DENY) and strict HTTPS Network Security Configuration (`mobile/android/app/src/main/res/xml/network_security_config.xml`), verified end-to-end over live Cloudflare TLS tunnel | `tests/test_nfr.py::test_nfr16_1_security_headers`, `tests/test_network_security_config.py`, `make public-check` |
 | 16.2 | DONE | Anonymous voice recording attribution option and pseudonymized logs | `tests/test_nfr.py::test_nfr16_2_voice_privacy` |
 | 16.3 | DONE | Mandatory passage origin attribution (`Origin.AI` / `Origin.HUMAN`) enforced by domain and SQL CHECK | `tests/test_nfr.py::test_nfr16_3_origin_attribution`, `tests/test_fix_3_constraints.py` |
 | 17 | PARTIAL | RTL layout and semantic structure verified; assistive technology and screen reader usability study pending | `tests/test_nfr.py::test_nfr17_accessibility_and_usability` |
@@ -61,7 +61,7 @@
 | 18.1 | DONE | Strict Fusha verification rules in reviewer feedback and automated checker reject dialectal keywords | `tests/test_nfr.py::test_nfr18_1_fusha_verification` |
 | 18.2 | DONE | Content moderation filter actively blocks vulgar and non-halal keywords | `tests/test_nfr.py::test_nfr18_2_halal_content_filter` |
 | 19 | DONE | Audio recordings validated and tagged for 1–3 minutes (60–180s) with pure-Python RIFF/WAVE header duration enforcement | `tests/test_fix_15_audio_duration_validation.py`, `tests/test_nfr.py::test_nfr19_audio_duration_rules`, `tests/test_live_e2e_integration.py` |
-| 20 | DONE | Arabic-first interface with full RTL layout, bundled `Noto Naskh Arabic` font (`mobile/lib/main.dart` with `Locale('ar')`, `mobile/assets/fonts/NotoNaskhArabic.ttf`), authentic Arabic enum translation layer (`mobile/lib/core/arabic_display.dart`), and proven live device walkthroughs (`mobile/docs/live_learner.png`, `mobile/docs/live_contributor.png`, `mobile/docs/live_reviewer.png`, `mobile/docs/live_admin.png`) | `mobile/test/arabic_enum_mapping_test.dart`, `mobile/test/clean_ui_copy_test.dart`, `mobile/test/font_and_theme_test.dart`, `mobile/test/golden_flows_test.dart`, `scripts/ui_smoke.py`, `tests/test_nfr.py::test_nfr20_arabic_rtl_ui` |
+| 20 | DONE | Arabic-first interface with full RTL layout, bundled `Noto Naskh Arabic` font (`mobile/lib/main.dart` with `Locale('ar')`, `mobile/assets/fonts/NotoNaskhArabic.ttf`), authentic Arabic enum translation layer (`mobile/lib/core/arabic_display.dart`), high-contrast tab styling, and proven live device walkthroughs (`mobile/docs/live_learner.png`, `mobile/docs/live_contributor.png`, `mobile/docs/live_reviewer.png`, `mobile/docs/live_admin.png`, `mobile/docs/live_audio_https.png`) | `mobile/test/arabic_enum_mapping_test.dart`, `mobile/test/clean_ui_copy_test.dart`, `mobile/test/font_and_theme_test.dart`, `mobile/test/tab_contrast_and_labels_test.dart`, `mobile/test/golden_flows_test.dart`, `scripts/ui_smoke.py`, `tests/test_nfr.py::test_nfr20_arabic_rtl_ui` |
 | 21 | PARTIAL | Contributor compensation ledger and credit calculation tested; automated banking/payout integration pending | `tests/test_nfr.py::test_nfr21_compensation_model` |
 
 ## (b) Implementation -> Requirement Mapping
@@ -119,12 +119,13 @@
 | `GET /api/admin/dashboard` | Req 10.2 |
 | `GET /api/admin/report` | Req 10.2 |
 | `GET /healthz` | Req 15 |
-| `GET /api/audio/{filename}` | Req 5.1, 6.1 |
+| `GET /api/audio/{filename}` | Req 5.1, 6.1, 16.1 |
 | `GET /` (Arabic-first Web UI) | Req 11, 13, 17.1, 17.2, 20 |
 | `mobile/lib/main.dart` | Req 11, 20 |
+| `mobile/lib/core/constants.dart` | Req 11, 16.1 |
 | `mobile/lib/core/theme.dart` | Req 11, 17.1, 20 |
 | `mobile/lib/core/arabic_display.dart` | Req 17, 20 |
-| `mobile/lib/core/api_client.dart` | Req 1.2, 11 |
+| `mobile/lib/core/api_client.dart` | Req 1.2, 11, 16.1 |
 | `mobile/lib/core/audio_recorder_service.dart` | Req 4.2, 11 |
 | `mobile/lib/core/audio_playback_service.dart` | Req 5.1, 6.1, 11 |
 | `mobile/lib/screens/auth/login_screen.dart` | Req 1.2, 11, 17.1 |
