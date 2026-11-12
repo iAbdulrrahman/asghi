@@ -27,6 +27,33 @@ UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "..", "uploads", "audio")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 
+def write_sample_audio(path: str, seconds: int = 90, rate: int = 16000) -> None:
+    """Write a real, decodable mono WAV so seeded passages are actually playable.
+
+    A placeholder tone is enough for the demo: the point is that the file is valid
+    audio (ExoPlayer/just_audio can decode it), not that it sounds like a person.
+    """
+    import math
+    import struct
+    import wave
+
+    frames = bytearray()
+    for n in range(rate * seconds):
+        # soft 440 Hz tone at ~9% amplitude, faded in/out over the first and last second
+        envelope = 1.0
+        if n < rate:
+            envelope = n / rate
+        elif n > rate * (seconds - 1):
+            envelope = max(0.0, (rate * seconds - n) / rate)
+        frames += struct.pack("<h", int(3000 * envelope * math.sin(2 * math.pi * 440 * n / rate)))
+
+    with wave.open(path, "wb") as w:
+        w.setnchannels(1)
+        w.setsampwidth(2)
+        w.setframerate(rate)
+        w.writeframes(bytes(frames))
+
+
 def seed_database(db_path: str = "asghi.db", password_overrides: Optional[Dict[str, str]] = None):
     repo = Repository(db_path=db_path)
 
@@ -61,13 +88,11 @@ def seed_database(db_path: str = "asghi.db", password_overrides: Optional[Dict[s
     User._registry.clear()
     Passage._registry.clear()
 
-    # 1. Create a sample MP3 for local testing
-    sample_audio_filename = "sample_fusha_01.mp3"
+    # 1. Create a real sample recording so playback actually works
+    sample_audio_filename = "sample_fusha_01.wav"
     sample_audio_path = os.path.join(UPLOAD_DIR, sample_audio_filename)
     if not os.path.exists(sample_audio_path):
-        with open(sample_audio_path, "wb") as f:
-            # Minimal MP3 frame header
-            f.write(b"\xff\xfb\x90\x64\x00\x00\x00\x00" * 200)
+        write_sample_audio(sample_audio_path, seconds=90)
 
     # 2. Seed Users for all 4 roles
     # Admin
