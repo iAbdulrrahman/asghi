@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 class AppConstants {
@@ -7,15 +6,14 @@ class AppConstants {
 
   static String? customBaseUrl;
 
-  // Compile-time default
+  static const String productionApiBaseUrl = 'https://asghi.0xabdul.dev';
+
+  // Compile-time default; local work overrides it with
+  // --dart-define=API_BASE=http://10.0.2.2:8000 (emulator) or a LAN address.
   static String get defaultApiBaseUrl {
     const defined = String.fromEnvironment('API_BASE', defaultValue: '');
     if (defined.isNotEmpty) return defined;
-    if (kIsWeb) return 'http://localhost:8000';
-    if (defaultTargetPlatform == TargetPlatform.android) {
-      return 'http://10.0.2.2:8000';
-    }
-    return 'http://localhost:8000';
+    return productionApiBaseUrl;
   }
 
   // Live configurable value
