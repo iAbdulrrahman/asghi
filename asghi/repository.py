@@ -212,6 +212,18 @@ class Repository:
                 FOREIGN KEY (session_id) REFERENCES test_sessions(session_id) ON DELETE CASCADE,
                 FOREIGN KEY (question_id) REFERENCES questions(question_id) ON DELETE CASCADE
             );
+
+            -- Lookup and uniqueness indexes (ISO/IEC 25010 time behaviour)
+            CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email ON users(email);
+            CREATE INDEX IF NOT EXISTS idx_users_phone ON users(phone_no);
+            CREATE INDEX IF NOT EXISTS idx_passages_status ON passages(status);
+            CREATE INDEX IF NOT EXISTS idx_passages_level ON passages(level);
+            CREATE INDEX IF NOT EXISTS idx_recordings_passage ON audio_recordings(passage_id);
+            CREATE INDEX IF NOT EXISTS idx_questions_passage ON questions(passage_id);
+            CREATE INDEX IF NOT EXISTS idx_sessions_learner ON test_sessions(learner_id);
+            CREATE INDEX IF NOT EXISTS idx_responses_session ON question_responses(session_id);
+            CREATE INDEX IF NOT EXISTS idx_reviews_content ON review_assignments(content_id);
+            CREATE INDEX IF NOT EXISTS idx_flags_status ON content_flags(status);
             """)
 
     def save_user(self, user: User) -> None:
