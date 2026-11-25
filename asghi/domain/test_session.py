@@ -76,7 +76,7 @@ class TestSession:
             return matching[0]
         return unanswered[0]
 
-    def adaptDifficulty(self, isCorrect: boolean) -> None:  # Note: signature uses bool / boolean
+    def adaptDifficulty(self, isCorrect: bool) -> None:
         """Sequence 3 step 53 & Invention #4: Adaptive difficulty progression."""
         ladder = [Difficulty.EASY, Difficulty.MEDIUM, Difficulty.HARD]
         idx = ladder.index(self.currentDifficulty)
