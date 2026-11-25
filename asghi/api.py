@@ -265,6 +265,9 @@ def login(req: LoginRequest, repo: Repository = Depends(get_repository)):
     if not target_user or not target_user.login(login_ident, req.password):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="بيانات الدخول غير صحيحة")
 
+    if target_user.passwordUpgraded:
+        repo.save_user(target_user)      # persist the salted hash
+
     token = create_access_token(target_user.userId, [p.role for p in target_user.userProfiles])
     return {
         "message": "تم تسجيل الدخول بنجاح",

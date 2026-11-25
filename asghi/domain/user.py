@@ -3,6 +3,7 @@ Matches class-diagram.puml and sequence diagram 4.
 """
 from __future__ import annotations
 import hashlib
+import secrets
 from typing import Optional, List
 from uuid import UUID, uuid4
 
@@ -14,9 +15,41 @@ from asghi.domain.reviewer_profile import ReviewerProfile
 from asghi.domain.admin_profile import AdminProfile
 
 
-def hash_password(password: str) -> str:
-    """PBKDF2 SHA-256 password hash (Invention #2)."""
-    return hashlib.sha256(password.encode("utf-8")).hexdigest()
+PBKDF2_ITERATIONS = 210_000
+HASH_SCHEME = "pbkdf2_sha256"
+
+
+def hash_password(password: str, salt: Optional[str] = None,
+                  iterations: int = PBKDF2_ITERATIONS) -> str:
+    """PBKDF2-HMAC-SHA256 with a per-password random salt.
+
+    Stored form: pbkdf2_sha256$<iterations>$<salt_hex>$<derived_key_hex>
+    """
+    salt = salt or secrets.token_hex(16)
+    derived = hashlib.pbkdf2_hmac(
+        "sha256", password.encode("utf-8"), bytes.fromhex(salt), iterations
+    )
+    return f"{HASH_SCHEME}${iterations}${salt}${derived.hex()}"
+
+
+def verify_password(password: str, stored: str) -> bool:
+    """Constant-time check, accepting the legacy unsalted SHA-256 form."""
+    if stored.startswith(HASH_SCHEME + "$"):
+        try:
+            _, iterations, salt, digest = stored.split("$", 3)
+            derived = hashlib.pbkdf2_hmac(
+                "sha256", password.encode("utf-8"), bytes.fromhex(salt), int(iterations)
+            )
+        except (ValueError, TypeError):
+            return False
+        return secrets.compare_digest(derived.hex(), digest)
+    legacy = hashlib.sha256(password.encode("utf-8")).hexdigest()
+    return secrets.compare_digest(legacy, stored)
+
+
+def needs_rehash(stored: str) -> bool:
+    """True when a stored hash predates the salted PBKDF2 scheme."""
+    return not stored.startswith(HASH_SCHEME + "$")
 
 
 class User:
@@ -40,6 +73,7 @@ class User:
         self.phoneNo: Optional[str] = phoneNo
         self.displayName: str = displayName
         self.passwordHash: str = passwordHash
+        self.passwordUpgraded: bool = False
         self.arabicLevel: Level = arabicLevel
         self.userProfiles: List[UserRoleProfile] = []
         self.status: str = "ACTIVE"
@@ -62,7 +96,13 @@ class User:
         )
         if not match_identifier:
             return False
-        return self.passwordHash == hash_password(password)
+        if not verify_password(password, self.passwordHash):
+            return False
+        if needs_rehash(self.passwordHash):
+            # transparent upgrade of pre-salt hashes on a successful login
+            self.passwordHash = hash_password(password)
+            self.passwordUpgraded = True
+        return True
 
     def completeProfile(
         self,
