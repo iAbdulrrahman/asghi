@@ -18,6 +18,7 @@ from asghi.moderation import (
     check_fusha_compliance,
     validate_audio_metadata,
 )
+from audio_fixtures import make_mp3
 
 client = TestClient(app)
 
@@ -102,7 +103,7 @@ def test_nfr16_2_voice_privacy():
     p = Passage(text="نص للخصوصية", level=Level.A1, topic="عام", duration=timedelta(seconds=60))
     p.claim(cp.userRoleProfileId)
 
-    audio_bytes = b"\xff\xfb\x90\x64" * 40
+    audio_bytes = make_mp3(60)
     res = client.post(
         "/api/contributor/submit-audio",
         headers={"Authorization": f"Bearer {token}"},
