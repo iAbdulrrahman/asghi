@@ -4,6 +4,7 @@ skinparam packageStyle rectangle
 skinparam shadowing false
 skinparam nodesep 18
 skinparam ranksep 45
+skinparam linetype polyline
 skinparam defaultFontName Arial
 
 actor "Learner" as Learner
