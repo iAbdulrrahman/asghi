@@ -4,6 +4,12 @@ Scope: `asghi/` (4,395 LOC), `mobile/lib/` (4,116 LOC of Dart), reviewed against
 scratch database. Every finding below was reproduced, not inferred — the evidence line quotes the
 actual response or measurement.
 
+**Status:** findings 1–5, 7–12, 14, 15 and 16 are fixed on branch `fix/code-review` (commits
+`c0f48e0`, `054b7b9`, `10cbe9c`, `d80b9df`), each with the test that fails on the old code.
+Nothing under `asghi/domain/` was touched, so the class and sequence diagrams remain valid.
+Still open: 6 (quorum rule duplicated in SQL — the runtime truth, needs a product decision) and
+13 (the `fail_injection` hook, kept because the atomicity test uses it).
+
 **Verdict:** the architecture is sound and the suite is genuinely green (128 backend tests, 45 client
 tests), but the boundary layer — the file that turns HTTP into domain calls — has four defects that
 break requirements outright, and the workflow guards that the diagrams describe are enforced only in
