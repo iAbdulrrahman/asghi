@@ -26,7 +26,6 @@ def get_secret_key() -> str:
     return secret or "asghi-fusha-listening-secret-key-dev-insecure"
 
 
-SECRET_KEY = get_secret_key()
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24  # 24 hours
 

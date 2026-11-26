@@ -199,5 +199,13 @@ final cataloguePassagesProvider = FutureProvider<List<Passage>>((ref) async {
 });
 
 
-final audioRecorderProvider = Provider<AudioRecorderService>((ref) => DeviceAudioRecorder());
-final audioPlaybackProvider = Provider<AudioPlaybackService>((ref) => JustAudioPlaybackService());
+final audioRecorderProvider = Provider<AudioRecorderService>((ref) {
+  final service = DeviceAudioRecorder();
+  ref.onDispose(service.dispose);
+  return service;
+});
+final audioPlaybackProvider = Provider<AudioPlaybackService>((ref) {
+  final service = JustAudioPlaybackService();
+  ref.onDispose(service.dispose);
+  return service;
+});
