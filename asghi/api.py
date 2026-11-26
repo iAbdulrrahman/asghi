@@ -513,9 +513,8 @@ async def submit_audio(
             status_code=400,
             detail="تعذر التحقق من مدة التسجيل: الصيغة غير مدعومة أو الملف تالف.",
         )
-    actual_duration = measured_duration
 
-    valid, err_msg = validate_audio_metadata(file_size, actual_duration)
+    valid, err_msg = validate_audio_metadata(file_size, measured_duration)
     if not valid:
         raise HTTPException(status_code=400, detail=err_msg)
 
@@ -539,7 +538,7 @@ async def submit_audio(
     try:
         rec = target_p.addAudio(
             audioFile=saved_filename,
-            duration=timedelta(seconds=actual_duration),
+            duration=timedelta(seconds=measured_duration),
             attribution=attribution,
             authorId=user.userId,
         )
