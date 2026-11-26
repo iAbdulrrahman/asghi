@@ -7,7 +7,7 @@ import os
 import sqlite3
 from contextlib import contextmanager
 from datetime import datetime, timezone, timedelta
-from typing import Optional, List, Any
+from typing import Optional, List, Any, Dict
 from uuid import UUID
 
 from asghi.domain.enums import (
@@ -44,8 +44,21 @@ def get_db_path() -> str:
     return os.environ.get("ASGHI_DB_PATH", DEFAULT_DB_PATH)
 
 
-def get_repository() -> Repository:
-    return Repository(db_path=get_db_path())
+_REPOSITORIES: Dict[str, "Repository"] = {}
+
+
+def get_repository() -> "Repository":
+    """One repository per database path for the life of the process.
+
+    Building one per call ran _init_db() (10 CREATE TABLE + 10 CREATE INDEX) on every
+    request, measured at ~3.5 ms - more than the endpoint's own work.
+    """
+    db_path = get_db_path()
+    repo = _REPOSITORIES.get(db_path)
+    if repo is None:
+        repo = Repository(db_path=db_path)
+        _REPOSITORIES[db_path] = repo
+    return repo
 
 
 class Repository:
@@ -54,9 +67,12 @@ class Repository:
         self._init_db()
 
     def clear_all_tables(self) -> None:
-        """Clear all tables in database for isolated test fixtures."""
+        """Clear all tables in database for isolated test fixtures.
+
+        Children are deleted before parents, so foreign keys stay satisfied; toggling
+        PRAGMA foreign_keys here would be a no-op (SQLite ignores it inside a transaction).
+        """
         with self._get_conn() as conn:
-            conn.execute("PRAGMA foreign_keys = OFF;")
             conn.execute("DELETE FROM active_claims;")
             conn.execute("DELETE FROM content_flags;")
             conn.execute("DELETE FROM review_assignments;")
@@ -67,7 +83,6 @@ class Repository:
             conn.execute("DELETE FROM passages;")
             conn.execute("DELETE FROM user_profiles;")
             conn.execute("DELETE FROM users;")
-            conn.execute("PRAGMA foreign_keys = ON;")
 
 
 
@@ -822,6 +837,28 @@ class Repository:
                     p.changeStatus(ContentStatus.CLAIMED)
                     break
             return True
+
+    def has_active_claim(self, passage_id: UUID, contributor_id: UUID, ttl_seconds: int = 259200) -> bool:
+        """True when this contributor holds a live (unexpired) claim on the passage.
+
+        Sequence 1 requires claim -> record -> submit; without this check any contributor
+        could upload audio to a passage nobody claimed.
+        """
+        with self._get_conn() as conn:
+            row = conn.execute("""
+                SELECT 1 FROM active_claims
+                WHERE passage_id = ? AND contributor_id = ?
+                  AND (strftime('%s', 'now') - strftime('%s', claimed_at)) <= ?;
+            """, (str(passage_id), str(contributor_id), ttl_seconds)).fetchone()
+            if row:
+                return True
+        p = next((x for x in Passage._registry if x.passageId == passage_id), None)
+        return bool(
+            p
+            and p.claimedBy
+            and str(p.claimedBy) == str(contributor_id)
+            and not p.isClaimExpired()
+        )
 
     def sweep_expired_claims(self, ttl_seconds: int = 259200) -> int:
         """Release expired claims that exceeded TTL back to DRAFT.

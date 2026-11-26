@@ -12,6 +12,7 @@ from asghi.domain.passage import Passage
 from asghi.domain.contributor_profile import ContributorProfile
 from asghi.domain.audio_recording import AudioRecording
 from asghi.security import create_access_token
+from audio_fixtures import make_mp3
 
 client = TestClient(app)
 
@@ -47,7 +48,7 @@ def test_contributor_recording_cycle():
     assert c_res.status_code == 200
 
     # 2. Upload audio
-    audio_content = b"\xff\xfb\x90\x64" * 100
+    audio_content = make_mp3(90)
     u_res = client.post(
         "/api/contributor/submit-audio",
         headers={"Authorization": f"Bearer {token}"},
@@ -104,7 +105,7 @@ def test_upload_audio_recording():
     )
     p.claim(con.userProfiles[0].userRoleProfileId)
 
-    audio_bytes = b"\xff\xfb\x90\x64" * 50
+    audio_bytes = make_mp3(85)
     res = client.post(
         "/api/contributor/submit-audio",
         headers={"Authorization": f"Bearer {token}"},
@@ -149,7 +150,7 @@ def test_attribution_choice():
     )
     p.claim(con.userProfiles[0].userRoleProfileId)
 
-    audio_bytes = b"\xff\xfb\x90\x64" * 50
+    audio_bytes = make_mp3(85)
     res = client.post(
         "/api/contributor/submit-audio",
         headers={"Authorization": f"Bearer {token}"},

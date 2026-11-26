@@ -3,10 +3,13 @@ Implements all functional requirements and enforces role-gating per h_uc.puml.
 """
 from __future__ import annotations
 import asyncio
+import logging
+import mimetypes
 import os
 import shutil
 from contextlib import asynccontextmanager
 from datetime import timedelta
+from pathlib import Path
 from typing import Optional, List, Dict, Any
 from uuid import UUID, uuid4
 
@@ -66,6 +69,9 @@ UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "..", "uploads", "audio")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 
+logger = logging.getLogger(__name__)
+
+
 async def _claim_sweeper_loop():
     """Background loop to sweep expired claims every 60s."""
     while True:
@@ -74,7 +80,8 @@ async def _claim_sweeper_loop():
             repo.sweep_expired_claims()
             repo.sweep_abandoned_sessions()
         except Exception:
-            pass
+            # a silent sweeper would leave claims on hold forever; log and keep going
+            logger.exception("claim sweeper iteration failed")
         await asyncio.sleep(60)
 
 @asynccontextmanager
@@ -98,12 +105,15 @@ app = FastAPI(
 
 
 # NFR 16.1: Security headers & CORS
+# Wildcard origins with credentials is invalid per the CORS spec (the browser echoes any
+# Origin and allows cookie-bearing requests). Auth here rides in the Authorization header,
+# so credentials are not enabled.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_credentials=False,
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type"],
 )
 
 
@@ -488,11 +498,22 @@ async def submit_audio(
     if not contributor_prof:
         raise HTTPException(status_code=403, detail="المستخدم ليس مساهماً")
 
+    # Sequence 1: claim first, record second. Without this the endpoint accepts audio for
+    # a passage nobody has claimed (and nobody is accountable for).
+    if not repo.has_active_claim(passageId, contributor_prof.userRoleProfileId):
+        raise HTTPException(status_code=409, detail="يجب حجز النص قبل رفع التسجيل")
+
     # Read and validate file size and duration (NFR 12, Req 19, Finding 15)
     file_bytes = await file.read()
     file_size = len(file_bytes)
-    derived_duration = extract_audio_duration(file_bytes)
-    actual_duration = derived_duration if derived_duration is not None else durationSeconds
+    measured_duration = extract_audio_duration(file_bytes)
+    if measured_duration is None:
+        # Never fall back to the number the client sent: it is the thing being checked
+        raise HTTPException(
+            status_code=400,
+            detail="تعذر التحقق من مدة التسجيل: الصيغة غير مدعومة أو الملف تالف.",
+        )
+    actual_duration = measured_duration
 
     valid, err_msg = validate_audio_metadata(file_size, actual_duration)
     if not valid:
@@ -729,6 +750,14 @@ def review_question(
     if not target_q:
         raise HTTPException(status_code=404, detail="السؤال غير موجود")
 
+    reviewer_prof = next((p for p in user.userProfiles if isinstance(p, ReviewerProfile)), None)
+    if (
+        reviewer_prof
+        and target_q.authorId
+        and str(target_q.authorId) == str(reviewer_prof.userRoleProfileId)
+    ):
+        raise HTTPException(status_code=403, detail="لا يمكن للمراجع اعتماد سؤاله الخاص")
+
     if req.isApproved:
         target_q.verify()
     else:
@@ -826,15 +855,21 @@ def start_learner_session(req: StartSessionRequest, user: User = Depends(get_cur
     }
 
 
+def _owned_session(sessionId: UUID, user: User) -> TestSession:
+    """Fetch a live session only if the caller owns it (unknown and foreign ids look alike)."""
+    session = active_sessions.get(sessionId)
+    if not session or str(getattr(session, "learnerId", "")) != str(user.userId):
+        raise HTTPException(status_code=404, detail="الجلسة غير موجودة")
+    return session
+
+
 @app.get(
     "/api/learner/sessions/{sessionId}/question",
     dependencies=[Depends(require_roles(UserRole.LEARNER, UserRole.ADMIN))],
 )
-def get_next_question(sessionId: UUID):
+def get_next_question(sessionId: UUID, user: User = Depends(get_current_user)):
     """Req 6.3 & Seq 3: Get next question at adaptive difficulty."""
-    session = active_sessions.get(sessionId)
-    if not session:
-        raise HTTPException(status_code=404, detail="الجلسة غير موجودة")
+    session = _owned_session(sessionId, user)
 
     q = session.nextQuestion()
     if not q:
@@ -858,12 +893,17 @@ def get_next_question(sessionId: UUID):
 def submit_session_answer(
     sessionId: UUID,
     req: SubmitAnswerRequest,
+    user: User = Depends(get_current_user),
     repo: Repository = Depends(get_repository),
 ):
     """Req 6.4, 6.5, 9 & Seq 3: Submit answer, evaluate, adapt difficulty, return explanation."""
-    session = active_sessions.get(sessionId)
-    if not session:
-        raise HTTPException(status_code=404, detail="الجلسة غير موجودة")
+    session = _owned_session(sessionId, user)
+
+    # Reject ids that do not belong to this session's passage before touching the database
+    passage = next((p for p in Passage._registry if p.passageId == session.passageId), None)
+    known_ids = {q.questionId for q in passage.questions} if passage else set()
+    if req.questionId not in known_ids:
+        raise HTTPException(status_code=404, detail="السؤال غير موجود في هذه الجلسة")
 
     result = session.submitAnswer(req.questionId, req.answer)
     if session.questionResponses:
@@ -888,9 +928,7 @@ def finish_learner_session(sessionId: UUID, user: User = Depends(get_current_use
     if not learner_prof:
         raise HTTPException(status_code=403, detail="المستخدم ليس متعلماً")
 
-    session = active_sessions.get(sessionId)
-    if not session:
-        raise HTTPException(status_code=404, detail="الجلسة غير موجودة")
+    session = _owned_session(sessionId, user)
 
     totals = session.finishSession()
     learner_prof.progress.update(totals["totalScore"], totals["timeSpent"])
@@ -978,9 +1016,16 @@ def flag_content(req: FlagCreateRequest, user: User = Depends(get_current_user))
     }
 
 
-@app.get("/api/passages/{passageId}/offline-package")
+@app.get(
+    "/api/passages/{passageId}/offline-package",
+    dependencies=[Depends(require_roles(UserRole.LEARNER, UserRole.CONTRIBUTOR, UserRole.REVIEWER, UserRole.ADMIN))],
+)
 def get_offline_package(passageId: UUID):
-    """Req 6.8 & Invention #14: Offline package manifest with passage, questions, audio."""
+    """Req 6.8 & Invention #14: Offline package manifest with passage, questions, audio.
+
+    Authenticated only, and deliberately free of correctAnswer/explanation: an anonymous
+    caller used to be able to harvest the answer key for every verified question.
+    """
     for p in Passage._registry:
         if p.passageId == passageId:
             return {
@@ -997,8 +1042,6 @@ def get_offline_package(passageId: UUID):
                         "questionId": str(q.questionId),
                         "promptText": q.promptText,
                         "answers": q.answers,
-                        "correctAnswer": q.correctAnswer,
-                        "explanation": q.explanation,
                         "difficulty": q.difficulty.value,
                     }
                     for q in p.questions if q.status == ContentStatus.VERIFIED
@@ -1276,12 +1319,13 @@ def get_audio_file(
     token: Optional[str] = None,
     user: User = Depends(get_current_user_from_header_or_query),
 ):
-    """Audio streaming endpoint."""
-    path = os.path.join(UPLOAD_DIR, filename)
-    if os.path.exists(path):
-        return FileResponse(path, media_type="audio/mpeg")
-    # Return 404 if file does not exist
-    raise HTTPException(status_code=404, detail="ملف الصوت غير موجود")
+    """Audio streaming endpoint. Only files directly inside uploads/audio are served."""
+    base = Path(UPLOAD_DIR).resolve()
+    target = (base / filename).resolve()
+    # a path segment may carry ../ or ..\ ; refuse anything that escapes the directory
+    if target.parent != base or not target.is_file():
+        raise HTTPException(status_code=404, detail="ملف الصوت غير موجود")
+    return FileResponse(target, media_type=mimetypes.guess_type(target.name)[0] or "application/octet-stream")
 
 
 # Mount static directory for minimal mobile-friendly RTL UI

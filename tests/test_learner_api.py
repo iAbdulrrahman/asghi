@@ -268,9 +268,21 @@ def test_actionable_feedback_on_wrong_answer():
 def test_offline_package_endpoint():
     """Req 6.8: Offline package download manifest (Req 6.8 marked out-of-scope for sync, manifest supported)."""
     p = _setup_verified_passage()
-    res = client.get(f"/api/passages/{p.passageId}/offline-package")
+    learner = User(email=f"offline_{p.passageId.hex[:6]}@asghi.org")
+    learner.addRole(UserRole.LEARNER)
+    token = create_access_token(learner.userId, [UserRole.LEARNER])
+
+    # anonymous callers must not reach the manifest at all
+    assert client.get(f"/api/passages/{p.passageId}/offline-package").status_code in (401, 403)
+
+    res = client.get(
+        f"/api/passages/{p.passageId}/offline-package",
+        headers={"Authorization": f"Bearer {token}"},
+    )
     assert res.status_code == 200
     data = res.json()
     assert data["passageId"] == str(p.passageId)
     assert len(data["audio"]) >= 1
     assert len(data["questions"]) >= 1
+    # the answer key is not part of a downloadable package
+    assert all("correctAnswer" not in q and "explanation" not in q for q in data["questions"])
